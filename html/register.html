@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>注册 - TodoList App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #ffffff;
+        color: #000000;
+        max-width: 100%;
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .status-bar {
+        height: 44px;
+        width: 100%;
+        background-color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .content-area {
+        flex: 1;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .form-input {
+        width: 100%;
+        padding: 15px 16px;
+        border-radius: 10px;
+        border: 1px solid #d1d1d6;
+        font-size: 16px;
+        background-color: #f2f2f7;
+        margin-bottom: 16px;
+      }
+      .form-input:focus {
+        outline: none;
+        border-color: #007aff;
+        background-color: #ffffff;
+      }
+      .form-label {
+        font-size: 15px;
+        font-weight: 500;
+        color: #3a3a3c;
+        margin-bottom: 8px;
+        display: block;
+      }
+      .primary-btn {
+        width: 100%;
+        padding: 16px 0;
+        background-color: #007aff;
+        color: white;
+        font-weight: 600;
+        font-size: 17px;
+        border-radius: 12px;
+        border: none;
+        margin-top: 20px;
+      }
+      .primary-btn:disabled {
+        background-color: #b0b0b0;
+      }
+      .social-btn {
+        width: 100%;
+        padding: 14px 0;
+        background-color: #ffffff;
+        border: 1px solid #d1d1d6;
+        border-radius: 12px;
+        font-weight: 500;
+        font-size: 16px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 12px;
+      }
+      .social-icon {
+        margin-right: 10px;
+        font-size: 20px;
+      }
+      .apple-icon {
+        color: #000000;
+      }
+      .google-icon {
+        color: #db4437;
+      }
+      .divider {
+        display: flex;
+        align-items: center;
+        margin: 24px 0;
+      }
+      .divider-line {
+        flex: 1;
+        height: 1px;
+        background-color: #e5e5ea;
+      }
+      .divider-text {
+        padding: 0 16px;
+        color: #8e8e93;
+        font-size: 14px;
+      }
+      .logo-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin: 20px 0 30px 0;
+      }
+      .app-logo {
+        width: 80px;
+        height: 80px;
+        margin-bottom: 16px;
+      }
+      .app-name {
+        font-weight: 700;
+        font-size: 28px;
+        color: #007aff;
+      }
+      .app-slogan {
+        font-size: 15px;
+        color: #8e8e93;
+        margin-top: 4px;
+      }
+      .header {
+        font-weight: 700;
+        font-size: 24px;
+        margin-bottom: 20px;
+      }
+      .terms-privacy {
+        font-size: 13px;
+        color: #8e8e93;
+        text-align: center;
+        margin: 16px 0 24px 0;
+        line-height: 1.4;
+      }
+      .terms-link {
+        color: #007aff;
+      }
+      .login-prompt {
+        text-align: center;
+        padding: 20px 0;
+        font-size: 15px;
+        margin-top: auto;
+      }
+      .login-link {
+        color: #007aff;
+        font-weight: 600;
+      }
+      .nav-header {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        position: relative;
+        margin-bottom: 20px;
+      }
+      .back-button {
+        color: #007aff;
+        font-size: 17px;
+        font-weight: 400;
+        display: flex;
+        align-items: center;
+        position: absolute;
+        left: 0;
+      }
+      .page-title {
+        flex: 1;
+        text-align: center;
+        font-weight: 600;
+        font-size: 17px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div>9:41</div>
+      <div class="flex space-x-2">
+        <i class="fas fa-signal"></i>
+        <i class="fas fa-wifi"></i>
+        <i class="fas fa-battery-full"></i>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Navigation Header -->
+      <div class="nav-header">
+        <a href="login.html" class="back-button"> <i class="fas fa-chevron-left mr-1"></i> 返回 </a>
+        <div class="page-title">注册账号</div>
+        <div style="width: 60px"></div>
+        <!-- Spacer -->
+      </div>
+
+      <!-- Logo and App Name -->
+      <div class="logo-area">
+        <div class="app-logo bg-blue-500 rounded-2xl flex items-center justify-center">
+          <i class="fas fa-check-circle text-white text-5xl"></i>
+        </div>
+        <div class="app-name">TodoList</div>
+        <div class="app-slogan">加入我们，提高您的工作效率</div>
+      </div>
+
+      <!-- Registration Form -->
+      <form>
+        <label class="form-label" for="fullname">全名</label>
+        <input type="text" class="form-input" id="fullname" placeholder="请输入您的全名" />
+
+        <label class="form-label" for="email">邮箱地址</label>
+        <input type="email" class="form-input" id="email" placeholder="请输入您的邮箱地址" />
+
+        <label class="form-label" for="password">密码</label>
+        <input type="password" class="form-input" id="password" placeholder="至少8位字符，包含字母和数字" />
+
+        <label class="form-label" for="confirm-password">确认密码</label>
+        <input type="password" class="form-input" id="confirm-password" placeholder="再次输入密码" />
+
+        <div class="terms-privacy">
+          点击"注册"按钮，表示您同意我们的<a href="#" class="terms-link">服务条款</a>和<a href="#" class="terms-link"
+            >隐私政策</a
+          >
+        </div>
+
+        <button type="button" class="primary-btn" onclick="window.location.href='login.html'">注册</button>
+      </form>
+
+      <!-- Social Registration Divider -->
+      <div class="divider">
+        <div class="divider-line"></div>
+        <div class="divider-text">或通过以下方式注册</div>
+        <div class="divider-line"></div>
+      </div>
+
+      <!-- Social Registration Buttons -->
+      <button type="button" class="social-btn">
+        <i class="fab fa-apple social-icon apple-icon"></i>
+        <span>使用 Apple 注册</span>
+      </button>
+
+      <button type="button" class="social-btn">
+        <i class="fab fa-google social-icon google-icon"></i>
+        <span>使用 Google 注册</span>
+      </button>
+
+      <!-- Login Prompt -->
+      <div class="login-prompt">
+        <span>已有账号? </span>
+        <a href="login.html" class="login-link">立即登录</a>
+      </div>
+    </div>
+  </body>
+</html>

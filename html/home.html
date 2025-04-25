@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Home - TodoList App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #ffffff;
+        color: #000000;
+        max-width: 100%;
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .status-bar {
+        height: 44px;
+        width: 100%;
+        background-color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .content-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .tab-bar {
+        height: 83px;
+        background-color: #ffffff;
+        border-top: 1px solid #e5e5ea;
+        display: flex;
+        justify-content: space-around;
+        padding-bottom: 30px; /* For iPhone home indicator */
+      }
+      .tab-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        color: #8e8e93;
+        text-decoration: none;
+        font-size: 10px;
+        padding-top: 8px;
+      }
+      .tab-item.active {
+        color: #007aff;
+      }
+      .tab-icon {
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      .ios-header {
+        font-weight: 700;
+        font-size: 34px;
+        margin-bottom: 16px;
+        line-height: 1.1;
+      }
+      .task-item {
+        border-radius: 10px;
+        padding: 16px;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        transition: all 0.2s;
+      }
+      .task-checkbox {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 2px solid;
+        margin-right: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        cursor: pointer;
+      }
+      .task-details {
+        flex: 1;
+      }
+      .task-title {
+        font-weight: 600;
+        font-size: 17px;
+        margin-bottom: 4px;
+      }
+      .task-meta {
+        display: flex;
+        align-items: center;
+        font-size: 13px;
+        color: #8e8e93;
+      }
+      .task-category {
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-right: 8px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .high {
+        background-color: #ffebe6;
+        color: #ff3b30;
+        border: 1px solid #ff9489;
+      }
+      .medium {
+        background-color: #fff4e6;
+        color: #ff9500;
+        border: 1px solid #ffcc80;
+      }
+      .low {
+        background-color: #e6f9f5;
+        color: #34c759;
+        border: 1px solid #87dfa8;
+      }
+      .quick-actions {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 24px;
+        padding: 4px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .quick-actions::-webkit-scrollbar {
+        display: none;
+      }
+      .action-btn {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 14px;
+        white-space: nowrap;
+      }
+      .search-bar {
+        background-color: #f2f2f7;
+        border-radius: 10px;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .search-icon {
+        color: #8e8e93;
+        margin-right: 8px;
+      }
+      .search-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        font-size: 17px;
+        color: #000000;
+        width: 100%;
+      }
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .section-title {
+        font-weight: 700;
+        font-size: 20px;
+      }
+      .see-all {
+        color: #007aff;
+        font-size: 15px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div>9:41</div>
+      <div class="flex space-x-2">
+        <i class="fas fa-signal"></i>
+        <i class="fas fa-wifi"></i>
+        <i class="fas fa-battery-full"></i>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <h1 class="ios-header">Today</h1>
+
+      <!-- Search Box -->
+      <div class="search-bar">
+        <i class="fas fa-search search-icon"></i>
+        <input class="search-input" type="text" placeholder="Search tasks..." />
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button class="action-btn bg-blue-50 text-blue-600">All</button>
+        <button class="action-btn bg-gray-100 text-gray-600">Today</button>
+        <button class="action-btn bg-gray-100 text-gray-600">Upcoming</button>
+        <button class="action-btn bg-gray-100 text-gray-600">Work</button>
+        <button class="action-btn bg-gray-100 text-gray-600">Personal</button>
+        <button class="action-btn bg-gray-100 text-gray-600">Shopping</button>
+      </div>
+
+      <!-- Today's Tasks Section -->
+      <div class="section-header">
+        <h2 class="section-title">Today's Tasks</h2>
+        <a href="#" class="see-all">See All</a>
+      </div>
+
+      <!-- Task List -->
+      <div class="task-list">
+        <!-- Task Item 1 -->
+        <div class="task-item bg-white shadow" onclick="window.location.href='task-detail.html'">
+          <div class="task-checkbox border-blue-500">
+            <i class="fas fa-check text-white text-xs"></i>
+          </div>
+          <div class="task-details">
+            <div class="task-title">Complete project proposal</div>
+            <div class="task-meta">
+              <span class="task-category high">High</span>
+              <span class="text-gray-500">9:00 AM - 11:00 AM</span>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+
+        <!-- Task Item 2 -->
+        <div class="task-item bg-white shadow" onclick="window.location.href='task-detail.html'">
+          <div class="task-checkbox border-green-500">
+            <i class="fas fa-check text-white text-xs"></i>
+          </div>
+          <div class="task-details">
+            <div class="task-title">Weekly team meeting</div>
+            <div class="task-meta">
+              <span class="task-category medium">Medium</span>
+              <span class="text-gray-500">1:00 PM - 2:00 PM</span>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+
+        <!-- Task Item 3 -->
+        <div class="task-item bg-white shadow" onclick="window.location.href='task-detail.html'">
+          <div class="task-checkbox border-orange-500">
+            <i class="fas fa-check text-white text-xs"></i>
+          </div>
+          <div class="task-details">
+            <div class="task-title">Call with client</div>
+            <div class="task-meta">
+              <span class="task-category low">Low</span>
+              <span class="text-gray-500">3:30 PM - 4:00 PM</span>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+      </div>
+
+      <!-- Upcoming Tasks Section -->
+      <div class="section-header mt-8">
+        <h2 class="section-title">Upcoming</h2>
+        <a href="#" class="see-all">See All</a>
+      </div>
+
+      <!-- Upcoming Task List -->
+      <div class="task-list">
+        <!-- Task Item 4 -->
+        <div class="task-item bg-white shadow" onclick="window.location.href='task-detail.html'">
+          <div class="task-checkbox border-red-500">
+            <i class="fas fa-check text-white text-xs"></i>
+          </div>
+          <div class="task-details">
+            <div class="task-title">Prepare presentation slides</div>
+            <div class="task-meta">
+              <span class="task-category high">High</span>
+              <span class="text-gray-500">Tomorrow, 10:00 AM</span>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+
+        <!-- Task Item 5 -->
+        <div class="task-item bg-white shadow" onclick="window.location.href='task-detail.html'">
+          <div class="task-checkbox border-blue-500">
+            <i class="fas fa-check text-white text-xs"></i>
+          </div>
+          <div class="task-details">
+            <div class="task-title">Review quarterly reports</div>
+            <div class="task-meta">
+              <span class="task-category medium">Medium</span>
+              <span class="text-gray-500">Tomorrow, 2:00 PM</span>
+            </div>
+          </div>
+          <i class="fas fa-chevron-right text-gray-400"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <a href="home.html" class="tab-item active">
+        <i class="tab-icon fas fa-home"></i>
+        <span>Home</span>
+      </a>
+      <a href="categories.html" class="tab-item">
+        <i class="tab-icon fas fa-folder"></i>
+        <span>Categories</span>
+      </a>
+      <a href="add-task.html" class="tab-item">
+        <i class="tab-icon fas fa-plus-circle"></i>
+        <span>Add</span>
+      </a>
+      <a href="statistics.html" class="tab-item">
+        <i class="tab-icon fas fa-chart-bar"></i>
+        <span>Stats</span>
+      </a>
+      <a href="profile.html" class="tab-item">
+        <i class="tab-icon fas fa-user"></i>
+        <span>Profile</span>
+      </a>
+    </div>
+  </body>
+</html>

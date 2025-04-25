@@ -1,74 +1,171 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  StatusBar,
+  Platform,
+  Alert,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+// Components
+import { SearchBar } from '../../components/SearchBar';
+import { ActionButton } from '../../components/ActionButton';
+import { TaskSection } from '../../components/TaskSection';
+import { TaskItem } from '../../components/TaskItem';
+
+// Mock Data
+const QUICK_ACTION_BUTTONS = [
+  { id: 'all', label: 'All' },
+  { id: 'today', label: 'Today' },
+  { id: 'upcoming', label: 'Upcoming' },
+  { id: 'work', label: 'Work' },
+  { id: 'personal', label: 'Personal' },
+  { id: 'shopping', label: 'Shopping' },
+];
+
+const TODAY_TASKS = [
+  {
+    id: '1',
+    title: 'Complete project proposal',
+    priority: 'high',
+    time: '9:00 AM - 11:00 AM',
+  },
+  {
+    id: '2',
+    title: 'Weekly team meeting',
+    priority: 'medium',
+    time: '1:00 PM - 2:00 PM',
+  },
+  {
+    id: '3',
+    title: 'Call with client',
+    priority: 'low',
+    time: '3:30 PM - 4:00 PM',
+  },
+];
+
+const UPCOMING_TASKS = [
+  {
+    id: '4',
+    title: 'Prepare presentation slides',
+    priority: 'high',
+    time: 'Tomorrow, 10:00 AM',
+  },
+  {
+    id: '5',
+    title: 'Review quarterly reports',
+    priority: 'medium',
+    time: 'Tomorrow, 2:00 PM',
+  },
+];
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilterId, setActiveFilterId] = useState('all');
+
+  const handleTaskPress = (taskId: string) => {
+    // For now, just show an alert since we haven't set up the task detail screen yet
+    Alert.alert('Task Selected', `You selected task #${taskId}`);
+  };
+
+  const handleSeeAllPress = (sectionType: 'today' | 'upcoming') => {
+    // For now, just show an alert since we haven't set up the tasks list screen yet
+    Alert.alert('See All Pressed', `View all ${sectionType} tasks`);
+  };
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={{
+          paddingTop: Platform.OS === 'android' ? insets.top : 0,
+          paddingBottom: 20,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.header}>Today</Text>
+
+        {/* Search Bar */}
+        <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
+
+        {/* Quick Action Buttons */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.actionButtonsContainer}
+          contentContainerStyle={styles.actionButtons}
+        >
+          {QUICK_ACTION_BUTTONS.map((button) => (
+            <ActionButton
+              key={button.id}
+              label={button.label}
+              isActive={activeFilterId === button.id}
+              onPress={() => setActiveFilterId(button.id)}
+            />
+          ))}
+        </ScrollView>
+
+        {/* Today's Tasks Section */}
+        <TaskSection
+          title="Today's Tasks"
+          onSeeAll={() => handleSeeAllPress('today')}
+        >
+          {TODAY_TASKS.map((task) => (
+            <TaskItem
+              key={task.id}
+              title={task.title}
+              priority={task.priority as 'high' | 'medium' | 'low'}
+              time={task.time}
+              onPress={() => handleTaskPress(task.id)}
+            />
+          ))}
+        </TaskSection>
+
+        {/* Upcoming Tasks Section */}
+        <TaskSection
+          title="Upcoming"
+          onSeeAll={() => handleSeeAllPress('upcoming')}
+        >
+          {UPCOMING_TASKS.map((task) => (
+            <TaskItem
+              key={task.id}
+              title={task.title}
+              priority={task.priority as 'high' | 'medium' | 'low'}
+              time={task.time}
+              onPress={() => handleTaskPress(task.id)}
+            />
+          ))}
+        </TaskSection>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingTop: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  scrollView: {
+    flex: 1,
+    paddingHorizontal: 16,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  header: {
+    fontSize: 34,
+    fontWeight: '700',
+    marginBottom: 16,
+    lineHeight: 41,
   },
-});
+  actionButtonsContainer: {
+    marginBottom: 24,
+  },
+  actionButtons: {
+    paddingVertical: 4,
+  },
+}); 

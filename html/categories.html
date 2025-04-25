@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Categories - TodoList App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #ffffff;
+        color: #000000;
+        max-width: 100%;
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .status-bar {
+        height: 44px;
+        width: 100%;
+        background-color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .content-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .tab-bar {
+        height: 83px;
+        background-color: #ffffff;
+        border-top: 1px solid #e5e5ea;
+        display: flex;
+        justify-content: space-around;
+        padding-bottom: 30px; /* For iPhone home indicator */
+      }
+      .tab-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        color: #8e8e93;
+        text-decoration: none;
+        font-size: 10px;
+        padding-top: 8px;
+      }
+      .tab-item.active {
+        color: #007aff;
+      }
+      .tab-icon {
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      .ios-header {
+        font-weight: 700;
+        font-size: 34px;
+        margin-bottom: 16px;
+        line-height: 1.1;
+      }
+      .search-bar {
+        background-color: #f2f2f7;
+        border-radius: 10px;
+        padding: 10px 16px;
+        display: flex;
+        align-items: center;
+        margin-bottom: 24px;
+      }
+      .search-icon {
+        color: #8e8e93;
+        margin-right: 8px;
+      }
+      .search-input {
+        background: transparent;
+        border: none;
+        outline: none;
+        font-size: 17px;
+        color: #000000;
+        width: 100%;
+      }
+      .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .section-title {
+        font-weight: 700;
+        font-size: 20px;
+      }
+      .add-button {
+        color: #007aff;
+        font-size: 15px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+      }
+      .add-icon {
+        margin-right: 4px;
+      }
+      .category-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-bottom: 30px;
+      }
+      .category-card {
+        background-color: #ffffff;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        transition: transform 0.2s;
+      }
+      .category-card:active {
+        transform: scale(0.98);
+      }
+      .category-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 12px;
+        color: white;
+      }
+      .category-name {
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 4px;
+      }
+      .task-count {
+        color: #8e8e93;
+        font-size: 13px;
+      }
+      .progress-bar {
+        width: 100%;
+        height: 6px;
+        background-color: #e5e5ea;
+        border-radius: 3px;
+        margin-top: 12px;
+        overflow: hidden;
+      }
+      .progress-value {
+        height: 100%;
+        border-radius: 3px;
+      }
+      .all-categories {
+        background-color: #ffffff;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+      }
+      .category-list-item {
+        display: flex;
+        align-items: center;
+        padding: 16px;
+        border-bottom: 1px solid #e5e5ea;
+      }
+      .category-list-item:last-child {
+        border-bottom: none;
+      }
+      .category-icon-small {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        margin-right: 16px;
+        color: white;
+        flex-shrink: 0;
+      }
+      .category-details {
+        flex: 1;
+      }
+      .category-name-small {
+        font-weight: 600;
+        font-size: 17px;
+        margin-bottom: 2px;
+      }
+      .task-count-small {
+        color: #8e8e93;
+        font-size: 14px;
+      }
+      .progress-small {
+        height: 4px;
+        width: 70px;
+        background-color: #e5e5ea;
+        border-radius: 2px;
+        overflow: hidden;
+        margin-right: 8px;
+      }
+      .progress-value-small {
+        height: 100%;
+        border-radius: 2px;
+      }
+      .progress-text {
+        color: #8e8e93;
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .progress-container {
+        display: flex;
+        align-items: center;
+      }
+      .work {
+        background-color: #5e5ce6;
+      }
+      .personal {
+        background-color: #30c48d;
+      }
+      .shopping {
+        background-color: #ff9500;
+      }
+      .health {
+        background-color: #ff2d55;
+      }
+      .finance {
+        background-color: #007aff;
+      }
+      .education {
+        background-color: #af52de;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div>9:41</div>
+      <div class="flex space-x-2">
+        <i class="fas fa-signal"></i>
+        <i class="fas fa-wifi"></i>
+        <i class="fas fa-battery-full"></i>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <h1 class="ios-header">Categories</h1>
+
+      <!-- Search Box -->
+      <div class="search-bar">
+        <i class="fas fa-search search-icon"></i>
+        <input class="search-input" type="text" placeholder="Search categories..." />
+      </div>
+
+      <!-- Featured Categories Section -->
+      <div class="section-header">
+        <h2 class="section-title">Featured Categories</h2>
+        <button class="add-button"><i class="add-icon fas fa-plus"></i> Add</button>
+      </div>
+
+      <!-- Category Grid -->
+      <div class="category-grid">
+        <!-- Category 1 -->
+        <div class="category-card">
+          <div class="category-icon work">
+            <i class="fas fa-briefcase"></i>
+          </div>
+          <div class="category-name">Work</div>
+          <div class="task-count">8 tasks</div>
+          <div class="progress-bar">
+            <div class="progress-value work" style="width: 75%"></div>
+          </div>
+        </div>
+
+        <!-- Category 2 -->
+        <div class="category-card">
+          <div class="category-icon personal">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="category-name">Personal</div>
+          <div class="task-count">5 tasks</div>
+          <div class="progress-bar">
+            <div class="progress-value personal" style="width: 40%"></div>
+          </div>
+        </div>
+
+        <!-- Category 3 -->
+        <div class="category-card">
+          <div class="category-icon shopping">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <div class="category-name">Shopping</div>
+          <div class="task-count">3 tasks</div>
+          <div class="progress-bar">
+            <div class="progress-value shopping" style="width: 100%"></div>
+          </div>
+        </div>
+
+        <!-- Category 4 -->
+        <div class="category-card">
+          <div class="category-icon health">
+            <i class="fas fa-heartbeat"></i>
+          </div>
+          <div class="category-name">Health</div>
+          <div class="task-count">2 tasks</div>
+          <div class="progress-bar">
+            <div class="progress-value health" style="width: 50%"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- All Categories Section -->
+      <div class="section-header">
+        <h2 class="section-title">All Categories</h2>
+      </div>
+
+      <!-- Category List -->
+      <div class="all-categories">
+        <!-- Category Item 1 -->
+        <div class="category-list-item">
+          <div class="category-icon-small work">
+            <i class="fas fa-briefcase"></i>
+          </div>
+          <div class="category-details">
+            <div class="category-name-small">Work</div>
+            <div class="task-count-small">8 tasks</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-small">
+              <div class="progress-value-small work" style="width: 75%"></div>
+            </div>
+            <span class="progress-text">75%</span>
+          </div>
+        </div>
+
+        <!-- Category Item 2 -->
+        <div class="category-list-item">
+          <div class="category-icon-small personal">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="category-details">
+            <div class="category-name-small">Personal</div>
+            <div class="task-count-small">5 tasks</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-small">
+              <div class="progress-value-small personal" style="width: 40%"></div>
+            </div>
+            <span class="progress-text">40%</span>
+          </div>
+        </div>
+
+        <!-- Category Item 3 -->
+        <div class="category-list-item">
+          <div class="category-icon-small shopping">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <div class="category-details">
+            <div class="category-name-small">Shopping</div>
+            <div class="task-count-small">3 tasks</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-small">
+              <div class="progress-value-small shopping" style="width: 100%"></div>
+            </div>
+            <span class="progress-text">100%</span>
+          </div>
+        </div>
+
+        <!-- Category Item 4 -->
+        <div class="category-list-item">
+          <div class="category-icon-small health">
+            <i class="fas fa-heartbeat"></i>
+          </div>
+          <div class="category-details">
+            <div class="category-name-small">Health</div>
+            <div class="task-count-small">2 tasks</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-small">
+              <div class="progress-value-small health" style="width: 50%"></div>
+            </div>
+            <span class="progress-text">50%</span>
+          </div>
+        </div>
+
+        <!-- Category Item 5 -->
+        <div class="category-list-item">
+          <div class="category-icon-small finance">
+            <i class="fas fa-dollar-sign"></i>
+          </div>
+          <div class="category-details">
+            <div class="category-name-small">Finance</div>
+            <div class="task-count-small">4 tasks</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-small">
+              <div class="progress-value-small finance" style="width: 25%"></div>
+            </div>
+            <span class="progress-text">25%</span>
+          </div>
+        </div>
+
+        <!-- Category Item 6 -->
+        <div class="category-list-item">
+          <div class="category-icon-small education">
+            <i class="fas fa-book"></i>
+          </div>
+          <div class="category-details">
+            <div class="category-name-small">Education</div>
+            <div class="task-count-small">6 tasks</div>
+          </div>
+          <div class="progress-container">
+            <div class="progress-small">
+              <div class="progress-value-small education" style="width: 65%"></div>
+            </div>
+            <span class="progress-text">65%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <a href="home.html" class="tab-item">
+        <i class="tab-icon fas fa-home"></i>
+        <span>Home</span>
+      </a>
+      <a href="categories.html" class="tab-item active">
+        <i class="tab-icon fas fa-folder"></i>
+        <span>Categories</span>
+      </a>
+      <a href="add-task.html" class="tab-item">
+        <i class="tab-icon fas fa-plus-circle"></i>
+        <span>Add</span>
+      </a>
+      <a href="statistics.html" class="tab-item">
+        <i class="tab-icon fas fa-chart-bar"></i>
+        <span>Stats</span>
+      </a>
+      <a href="profile.html" class="tab-item">
+        <i class="tab-icon fas fa-user"></i>
+        <span>Profile</span>
+      </a>
+    </div>
+  </body>
+</html>

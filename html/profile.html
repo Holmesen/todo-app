@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Profile - TodoList App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        background-color: #f2f2f7;
+        color: #000000;
+        max-width: 100%;
+        height: 100vh;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .status-bar {
+        height: 44px;
+        width: 100%;
+        background-color: #f2f2f7;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 16px;
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .content-area {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0;
+        -webkit-overflow-scrolling: touch;
+      }
+      .tab-bar {
+        height: 83px;
+        background-color: #ffffff;
+        border-top: 1px solid #e5e5ea;
+        display: flex;
+        justify-content: space-around;
+        padding-bottom: 30px; /* For iPhone home indicator */
+      }
+      .tab-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        flex: 1;
+        color: #8e8e93;
+        text-decoration: none;
+        font-size: 10px;
+        padding-top: 8px;
+      }
+      .tab-item.active {
+        color: #007aff;
+      }
+      .tab-icon {
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      .header-section {
+        padding: 20px 16px;
+        background-color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 20px;
+      }
+      .profile-image {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #ffffff;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 12px;
+      }
+      .user-name {
+        font-weight: 700;
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      .user-email {
+        color: #8e8e93;
+        font-size: 15px;
+        margin-bottom: 12px;
+      }
+      .edit-profile-btn {
+        color: #007aff;
+        font-size: 15px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+      }
+      .edit-icon {
+        margin-right: 6px;
+      }
+      .section-card {
+        background-color: #ffffff;
+        margin-bottom: 20px;
+        padding: 0 16px;
+      }
+      .section-header {
+        padding: 16px 0;
+        font-weight: 600;
+        font-size: 16px;
+        color: #3a3a3c;
+        position: relative;
+      }
+      .setting-row {
+        display: flex;
+        align-items: center;
+        padding: 16px 0;
+        border-top: 1px solid #e5e5ea;
+      }
+      .setting-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 16px;
+        color: white;
+        flex-shrink: 0;
+      }
+      .setting-detail {
+        flex: 1;
+      }
+      .setting-name {
+        font-weight: 500;
+        font-size: 17px;
+        margin-bottom: 2px;
+      }
+      .setting-description {
+        color: #8e8e93;
+        font-size: 14px;
+      }
+      .setting-value {
+        color: #8e8e93;
+        font-size: 16px;
+        padding-right: 8px;
+      }
+      .setting-toggle {
+        position: relative;
+        width: 50px;
+        height: 30px;
+        border-radius: 15px;
+        background-color: #34c759;
+        transition: all 0.3s;
+      }
+      .setting-toggle:before {
+        content: '';
+        position: absolute;
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background-color: white;
+        top: 2px;
+        right: 2px;
+        transition: all 0.3s;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      }
+      .setting-toggle.off {
+        background-color: #e5e5ea;
+      }
+      .setting-toggle.off:before {
+        right: 22px;
+      }
+      .chevron-right {
+        color: #c7c7cc;
+        font-size: 14px;
+      }
+      .bell {
+        background-color: #ff9500;
+      }
+      .clock {
+        background-color: #ff2d55;
+      }
+      .theme {
+        background-color: #5e5ce6;
+      }
+      .lock {
+        background-color: #007aff;
+      }
+      .sync {
+        background-color: #30c48d;
+      }
+      .info {
+        background-color: #64d2ff;
+      }
+      .logout {
+        background-color: #ff3b30;
+      }
+      .logout-row {
+        border-top: none;
+        justify-content: center;
+        padding: 20px 0;
+      }
+      .logout-btn {
+        color: #ff3b30;
+        font-weight: 500;
+        font-size: 17px;
+      }
+      .action-button {
+        width: 100%;
+        padding: 16px 0;
+        background-color: #ffffff;
+        border-radius: 10px;
+        font-weight: 500;
+        font-size: 17px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .premium-badge {
+        background-color: #ff9500;
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 3px 8px;
+        border-radius: 10px;
+        margin-left: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Status Bar -->
+    <div class="status-bar">
+      <div>9:41</div>
+      <div class="flex space-x-2">
+        <i class="fas fa-signal"></i>
+        <i class="fas fa-wifi"></i>
+        <i class="fas fa-battery-full"></i>
+      </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content-area">
+      <!-- Header with Profile Info -->
+      <div class="header-section">
+        <img
+          class="profile-image"
+          src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTB8fHByb2ZpbGV8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60"
+          alt="Profile Picture"
+        />
+        <div class="user-name">John Doe</div>
+        <div class="user-email">john.doe@example.com</div>
+        <button class="edit-profile-btn"><i class="edit-icon fas fa-edit"></i> Edit Profile</button>
+      </div>
+
+      <!-- Account Settings -->
+      <div class="section-card">
+        <div class="section-header">Account Settings</div>
+
+        <div class="setting-row">
+          <div class="setting-icon bell">
+            <i class="fas fa-bell"></i>
+          </div>
+          <div class="setting-detail">
+            <div class="setting-name">Notifications</div>
+            <div class="setting-description">Task reminders and alerts</div>
+          </div>
+          <div class="setting-toggle"></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-icon clock">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="setting-detail">
+            <div class="setting-name">Time Zone</div>
+            <div class="setting-description">Set your local time zone</div>
+          </div>
+          <div class="setting-value">UTC+1</div>
+          <i class="chevron-right fas fa-chevron-right"></i>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-icon theme">
+            <i class="fas fa-palette"></i>
+          </div>
+          <div class="setting-detail">
+            <div class="setting-name">Theme</div>
+            <div class="setting-description">Change app appearance</div>
+          </div>
+          <div class="setting-value">Light</div>
+          <i class="chevron-right fas fa-chevron-right"></i>
+        </div>
+      </div>
+
+      <!-- Security Settings -->
+      <div class="section-card">
+        <div class="section-header">Security</div>
+
+        <div class="setting-row">
+          <div class="setting-icon lock">
+            <i class="fas fa-lock"></i>
+          </div>
+          <div class="setting-detail">
+            <div class="setting-name">App Lock</div>
+            <div class="setting-description">Lock app with Face ID or PIN</div>
+          </div>
+          <div class="setting-toggle off"></div>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-icon sync">
+            <i class="fas fa-cloud-upload-alt"></i>
+          </div>
+          <div class="setting-detail">
+            <div class="setting-name">Data Sync</div>
+            <div class="setting-description">Sync tasks across devices</div>
+          </div>
+          <div class="setting-toggle"></div>
+        </div>
+      </div>
+
+      <!-- Premium -->
+      <div class="section-card">
+        <div class="section-header">Premium</div>
+
+        <div class="setting-row">
+          <div class="setting-icon theme">
+            <i class="fas fa-crown"></i>
+          </div>
+          <div class="setting-detail">
+            <div class="setting-name">Premium Plan <span class="premium-badge">PRO</span></div>
+            <div class="setting-description">Unlock all features</div>
+          </div>
+          <i class="chevron-right fas fa-chevron-right"></i>
+        </div>
+      </div>
+
+      <!-- About & Support -->
+      <div class="section-card">
+        <div class="section-header">About & Support</div>
+
+        <div class="setting-row">
+          <div class="setting-icon info">
+            <i class="fas fa-info"></i>
+          </div>
+          <div class="setting-detail">
+            <div class="setting-name">About</div>
+            <div class="setting-description">App version and information</div>
+          </div>
+          <div class="setting-value">v1.2.1</div>
+          <i class="chevron-right fas fa-chevron-right"></i>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-icon info">
+            <i class="fas fa-question-circle"></i>
+          </div>
+          <div class="setting-detail">
+            <div class="setting-name">Help & Support</div>
+            <div class="setting-description">Get help with the app</div>
+          </div>
+          <i class="chevron-right fas fa-chevron-right"></i>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-icon info">
+            <i class="fas fa-star"></i>
+          </div>
+          <div class="setting-detail">
+            <div class="setting-name">Rate the App</div>
+            <div class="setting-description">Share your feedback</div>
+          </div>
+          <i class="chevron-right fas fa-chevron-right"></i>
+        </div>
+      </div>
+
+      <!-- Logout Button -->
+      <div class="section-card">
+        <div class="setting-row logout-row">
+          <button class="logout-btn">Sign Out</button>
+        </div>
+      </div>
+
+      <div class="px-4 mb-8 text-center">
+        <p class="text-xs text-gray-500">TodoList App v1.2.1</p>
+        <p class="text-xs text-gray-500">&copy; 2023 TodoList Inc. All rights reserved.</p>
+      </div>
+    </div>
+
+    <!-- Tab Bar -->
+    <div class="tab-bar">
+      <a href="home.html" class="tab-item">
+        <i class="tab-icon fas fa-home"></i>
+        <span>Home</span>
+      </a>
+      <a href="categories.html" class="tab-item">
+        <i class="tab-icon fas fa-folder"></i>
+        <span>Categories</span>
+      </a>
+      <a href="add-task.html" class="tab-item">
+        <i class="tab-icon fas fa-plus-circle"></i>
+        <span>Add</span>
+      </a>
+      <a href="statistics.html" class="tab-item">
+        <i class="tab-icon fas fa-chart-bar"></i>
+        <span>Stats</span>
+      </a>
+      <a href="profile.html" class="tab-item active">
+        <i class="tab-icon fas fa-user"></i>
+        <span>Profile</span>
+      </a>
+    </div>
+  </body>
+</html>
