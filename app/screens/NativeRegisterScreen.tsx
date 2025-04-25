@@ -31,7 +31,14 @@ const NativeRegisterScreen = () => {
   // 处理注册错误
   useEffect(() => {
     if (error) {
-      Alert.alert('注册失败', error);
+      // 显示具体错误信息
+      let errorMessage = error;
+      if (error.includes('创建用户设置失败')) {
+        errorMessage = '注册过程中创建用户设置失败，请稍后重试。';
+      } else if (error.includes('该邮箱已被注册')) {
+        errorMessage = '该邮箱已被注册，请使用其他邮箱或直接登录。';
+      }
+      Alert.alert('注册失败', errorMessage);
     }
   }, [error]);
 
@@ -55,8 +62,18 @@ const NativeRegisterScreen = () => {
       return;
     }
 
-    // 调用原生注册方法
-    await nativeSignUp(username, email, password, fullName);
+    try {
+      // 调用原生注册方法
+      await nativeSignUp(username, email, password, fullName);
+
+      // 如果注册成功，显示成功信息
+      if (!error) {
+        Alert.alert('注册成功', '您的账户已创建成功！');
+      }
+    } catch (e) {
+      // 这里不需要处理错误，因为错误已经存储在 authStore 的 error 状态中，
+      // 会由上面的 useEffect 处理
+    }
   };
 
   const navigateToLogin = () => {

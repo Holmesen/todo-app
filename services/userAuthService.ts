@@ -27,6 +27,13 @@ interface User {
   is_premium: boolean;
 }
 
+interface UserSettings {
+  user_id: number;
+  notifications_enabled: boolean;
+  app_lock_enabled: boolean;
+  data_sync_enabled: boolean;
+}
+
 // 辅助函数：哈希密码
 async function hashPassword(password: string): Promise<string> {
   const salt = Math.random().toString(36).substring(2, 15);
@@ -70,8 +77,12 @@ export const userAuthService = {
       // 对密码进行哈希处理
       const passwordHash = await hashPassword(userData.password);
 
-      // 插入新用户
-      const { data: newUser, error } = await supabase
+      // 开始数据库事务
+      // 注意：由于 Supabase JavaScript 客户端不直接支持事务，
+      // 我们将分两步操作，并在出错时尝试回滚
+
+      // 1. 插入新用户
+      const { data: newUser, error: userError } = await supabase
         .from('todo_users')
         .insert([
           {
@@ -88,8 +99,37 @@ export const userAuthService = {
         .select()
         .single();
 
-      if (error) {
-        throw error;
+      if (userError) {
+        throw userError;
+      }
+
+      // 2. 为新用户创建默认设置
+      const defaultSettings: UserSettings = {
+        user_id: newUser.id,
+        notifications_enabled: true,
+        app_lock_enabled: false,
+        data_sync_enabled: true
+      };
+
+      const { error: settingsError } = await supabase
+        .from('todo_user_settings')
+        .insert([defaultSettings]);
+
+      // 如果创建设置失败，尝试删除刚创建的用户
+      if (settingsError) {
+        console.error('创建用户设置失败:', settingsError);
+
+        // 尝试删除用户（回滚）
+        const { error: deleteError } = await supabase
+          .from('todo_users')
+          .delete()
+          .eq('id', newUser.id);
+
+        if (deleteError) {
+          console.error('回滚用户创建失败:', deleteError);
+        }
+
+        throw new Error('创建用户设置失败，注册过程已回滚');
       }
 
       return newUser as User;
@@ -160,6 +200,28 @@ export const userAuthService = {
       return user as User;
     } catch (error) {
       console.error('获取用户信息失败:', error);
+      return null;
+    }
+  },
+
+  /**
+   * 获取用户设置
+   */
+  async getUserSettings(userId: number): Promise<UserSettings | null> {
+    try {
+      const { data, error } = await supabase
+        .from('todo_user_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      return data as UserSettings;
+    } catch (error) {
+      console.error('获取用户设置失败:', error);
       return null;
     }
   },
