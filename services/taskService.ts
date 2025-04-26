@@ -1,14 +1,11 @@
 import { supabase } from '../lib/supabase';
 import { PostgrestError } from '@supabase/supabase-js';
 import { formatISO, startOfDay, endOfDay, addDays, parseISO } from 'date-fns';
+import { z } from 'zod';
 
-// Task priority type from database schema
+// Enum types from database schema
 export type TaskPriority = 'low' | 'medium' | 'high';
-
-// Task status type from database schema
 export type TaskStatus = 'pending' | 'completed' | 'overdue';
-
-// Reminder type from database schema
 export type ReminderType =
   | 'none'
   | 'at_time'
@@ -18,14 +15,14 @@ export type ReminderType =
   | '1_hour_before'
   | '1_day_before';
 
-// Task type based on database schema
-export interface Task {
-  id?: number;
+// Type definitions aligned with database schema
+export interface DbTask {
+  id: number;
   user_id: number;
   category_id: number | null;
   title: string;
   description: string | null;
-  due_date: string | null; // ISO date string format
+  due_date: string; // ISO date string format
   due_time: string | null; // ISO time string format
   priority: TaskPriority;
   status: TaskStatus;
@@ -35,7 +32,7 @@ export interface Task {
   updated_at?: string;
 }
 
-// Category type based on database schema
+// Category definition aligned with schema
 export interface Category {
   id: number;
   user_id: number;
@@ -47,9 +44,9 @@ export interface Category {
   updated_at?: string;
 }
 
-// Subtask type based on database schema
-export interface Subtask {
-  id?: number;
+// Subtask definition aligned with schema
+export interface DbSubtask {
+  id: number;
   task_id: number;
   title: string;
   is_completed: boolean;
@@ -58,9 +55,9 @@ export interface Subtask {
   completed_at?: string | null;
 }
 
-// Attachment type based on database schema
+// Attachment definition aligned with schema
 export interface Attachment {
-  id?: number;
+  id: number;
   task_id: number;
   file_name: string;
   file_type: string | null;
@@ -69,9 +66,9 @@ export interface Attachment {
   created_at?: string;
 }
 
-// Reminder type based on database schema
+// Reminder definition aligned with schema
 export interface Reminder {
-  id?: number;
+  id: number;
   task_id: number;
   reminder_type: ReminderType;
   reminder_time: string;
@@ -80,10 +77,10 @@ export interface Reminder {
   updated_at?: string;
 }
 
-// Create task with subtasks and reminder
+// Create task input
 export interface CreateTaskInput {
-  task: Omit<Task, 'id' | 'created_at' | 'updated_at'>;
-  subtasks?: Omit<Subtask, 'id' | 'task_id' | 'created_at' | 'updated_at' | 'completed_at'>[];
+  task: Omit<DbTask, 'id' | 'created_at' | 'updated_at'>;
+  subtasks?: Omit<DbSubtask, 'id' | 'task_id' | 'created_at' | 'updated_at' | 'completed_at'>[];
   reminder?: Omit<Reminder, 'id' | 'task_id' | 'created_at' | 'updated_at'>;
 }
 
@@ -93,13 +90,113 @@ export interface ServiceResponse<T> {
   error: PostgrestError | Error | null;
 }
 
-export interface TaskWithCategory extends Task {
-  category?: Category | null;
+export interface TaskWithCategory extends Omit<DbTask, 'category'> {
+  category?: {
+    name: string;
+    color: string;
+    icon: string | null;
+  } | null;
 }
 
 export interface TaskResult {
   data: TaskWithCategory[] | null;
   error: PostgrestError | null;
+}
+
+// Zod Schemas for the API Layer
+// These are used to validate and transform data between DB and application
+
+// Subtask schema for the app layer
+export const SubtaskSchema = z.object({
+  id: z.union([z.number(), z.string()]).transform((n) => n.toString()),
+  title: z.string(),
+  completed: z.union([
+    z.boolean(),
+    z.literal(1).transform(() => true),
+    z.literal(0).transform(() => false),
+    z.literal('true').transform(() => true),
+    z.literal('false').transform(() => false),
+  ]),
+  task_id: z.union([z.number(), z.string()]).transform((n) => n.toString()),
+  user_id: z
+    .union([z.number(), z.string()])
+    .transform((n) => n.toString())
+    .optional(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+
+// Task schema for the app layer
+export const TaskSchema = z.object({
+  id: z.union([z.number(), z.string()]).transform((n) => n.toString()),
+  title: z.string(),
+  description: z.string().nullable().optional(),
+  priority: z.enum(['high', 'medium', 'low']),
+  category: z.string().nullable().optional(),
+  category_id: z
+    .union([z.number(), z.string(), z.null()])
+    .nullable()
+    .optional()
+    .transform((n) => (n === null || n === undefined ? null : n.toString())),
+  date: z.union([z.string().transform((str) => new Date(str)), z.date()]),
+  time: z.string().nullable().optional(),
+  reminder: z.string().nullable().optional(),
+  completed: z.union([
+    z.boolean(),
+    z.literal('pending').transform(() => false),
+    z.literal('completed').transform(() => true),
+    z.literal('overdue').transform(() => false),
+  ]),
+  user_id: z.union([z.number(), z.string()]).transform((n) => n.toString()),
+  created_at: z.union([z.string().transform((str) => new Date(str)), z.date()]),
+  updated_at: z.union([z.string().transform((str) => new Date(str)), z.date()]),
+});
+
+// Task with relations schema
+export const TaskWithRelationsSchema = TaskSchema.extend({
+  subtasks: z.array(SubtaskSchema).optional(),
+  attachments: z
+    .array(
+      z.object({
+        id: z.union([z.number(), z.string()]).transform((n) => n.toString()),
+        uri: z.string(),
+        type: z.string(),
+        task_id: z.union([z.number(), z.string()]).transform((n) => n.toString()),
+      })
+    )
+    .optional(),
+});
+
+// Types used in the application
+export type Task = z.infer<typeof TaskSchema>;
+export type TaskWithRelations = z.infer<typeof TaskWithRelationsSchema>;
+export type Subtask = z.infer<typeof SubtaskSchema>;
+
+// Transform DB Task to App Task
+function transformDbTaskToAppTask(dbTask: DbTask): Task {
+  return {
+    id: dbTask.id.toString(),
+    title: dbTask.title,
+    description: dbTask.description,
+    priority: dbTask.priority,
+    category_id: dbTask.category_id?.toString() || null,
+    date: new Date(dbTask.due_date),
+    time: dbTask.due_time,
+    completed: dbTask.status === 'completed',
+    user_id: dbTask.user_id.toString(),
+    created_at: new Date(dbTask.created_at || Date.now()),
+    updated_at: new Date(dbTask.updated_at || Date.now()),
+  };
+}
+
+// Transform DB Subtask to App Subtask
+function transformDbSubtaskToAppSubtask(dbSubtask: DbSubtask): Subtask {
+  return {
+    id: dbSubtask.id.toString(),
+    title: dbSubtask.title,
+    completed: dbSubtask.is_completed,
+    task_id: dbSubtask.task_id.toString(),
+  };
 }
 
 class TaskService {
@@ -113,10 +210,11 @@ class TaskService {
     if (reminderType === '1_day_before') return formatISO(subtractDays(dueDate, 1));
     return null;
   }
+
   /**
    * Creates a new task with optional subtasks and reminder
    */
-  async createTask(input: CreateTaskInput): Promise<ServiceResponse<Task>> {
+  async createTask(input: CreateTaskInput): Promise<ServiceResponse<DbTask>> {
     try {
       // 1. Insert task
       const { data: taskData, error: taskError } = await supabase
@@ -173,7 +271,7 @@ class TaskService {
   /**
    * Get all tasks for a user
    */
-  async getUserTasks(userId: number): Promise<ServiceResponse<Task[]>> {
+  async getUserTasks(userId: string): Promise<ServiceResponse<Task[]>> {
     try {
       const { data, error } = await supabase
         .from('todo_tasks')
@@ -183,7 +281,8 @@ class TaskService {
 
       if (error) throw error;
 
-      return { data, error: null };
+      const transformedTasks = data ? data.map((task) => transformDbTaskToAppTask(task)) : [];
+      return { data: transformedTasks, error: null };
     } catch (error) {
       console.error('Error fetching tasks:', error);
       return {
@@ -199,13 +298,13 @@ class TaskService {
    * @param filter 过滤器类型 ('all', 'today', 'upcoming', 或类别ID)
    * @returns 任务数据及任何可能的错误
    */
-  async getTasks(userId: number, filter: string): Promise<TaskResult> {
+  async getTasks(userId: string, filter: string): Promise<TaskResult> {
     let query = supabase
       .from('todo_tasks')
       .select(
         `
         *,
-        category:todo_categories(*)
+        category:todo_categories(name, color, icon)
       `
       )
       .eq('user_id', userId)
@@ -230,14 +329,14 @@ class TaskService {
         query = query.gte('due_date', startOfTomorrow.split('T')[0]);
       } else if (!isNaN(parseInt(filter))) {
         // Filter by category ID
-        query = query.eq('category_id', parseInt(filter));
+        query = query.eq('category_id', filter);
       }
     }
 
     const { data, error } = await query;
 
     return {
-      data: (data as TaskWithCategory[]) || null,
+      data: (data as unknown as TaskWithCategory[]) || null,
       error,
     };
   }
@@ -247,7 +346,7 @@ class TaskService {
    * @param userId 用户ID
    * @returns 今天的任务数据及任何可能的错误
    */
-  async getTodayTasks(userId: number): Promise<TaskResult> {
+  async getTodayTasks(userId: string): Promise<TaskResult> {
     const today = new Date();
     const startOfToday = formatISO(startOfDay(today));
     const endOfToday = formatISO(endOfDay(today));
@@ -257,7 +356,7 @@ class TaskService {
       .select(
         `
         *,
-        category:todo_categories(*)
+        category:todo_categories(name, color, icon)
       `
       )
       .eq('user_id', userId)
@@ -267,7 +366,7 @@ class TaskService {
       .order('due_time', { ascending: true });
 
     return {
-      data: (data as TaskWithCategory[]) || null,
+      data: (data as unknown as TaskWithCategory[]) || null,
       error,
     };
   }
@@ -278,7 +377,7 @@ class TaskService {
    * @param limit 要返回的任务数量
    * @returns 即将到来的任务数据及任何可能的错误
    */
-  async getUpcomingTasks(userId: number, limit: number = 5): Promise<TaskResult> {
+  async getUpcomingTasks(userId: string, limit: number = 5): Promise<TaskResult> {
     const tomorrow = addDays(new Date(), 1);
     const startOfTomorrow = formatISO(startOfDay(tomorrow));
 
@@ -287,7 +386,7 @@ class TaskService {
       .select(
         `
         *,
-        category:todo_categories(*)
+        category:todo_categories(name, color, icon)
       `
       )
       .eq('user_id', userId)
@@ -298,34 +397,36 @@ class TaskService {
       .limit(limit);
 
     return {
-      data: (data as TaskWithCategory[]) || null,
+      data: (data as unknown as TaskWithCategory[]) || null,
       error,
     };
   }
 
   /**
-   * 格式化任务时间以便显示
-   * @param task 任务对象
-   * @returns 格式化的时间字符串
+   * Format task time for display
+   * @param task The task object
+   * @returns Formatted time string
    */
   formatTaskTime(task: Task): string {
-    if (!task.due_date) {
+    // Convert task date to a string for comparison
+    const taskDate = task.date;
+
+    if (!taskDate) {
       return 'No due date';
     }
 
     const today = new Date();
     const tomorrow = addDays(today, 1);
-    const dueDate = parseISO(task.due_date);
 
     const isToday =
-      dueDate.getDate() === today.getDate() &&
-      dueDate.getMonth() === today.getMonth() &&
-      dueDate.getFullYear() === today.getFullYear();
+      taskDate.getDate() === today.getDate() &&
+      taskDate.getMonth() === today.getMonth() &&
+      taskDate.getFullYear() === today.getFullYear();
 
     const isTomorrow =
-      dueDate.getDate() === tomorrow.getDate() &&
-      dueDate.getMonth() === tomorrow.getMonth() &&
-      dueDate.getFullYear() === tomorrow.getFullYear();
+      taskDate.getDate() === tomorrow.getDate() &&
+      taskDate.getMonth() === tomorrow.getMonth() &&
+      taskDate.getFullYear() === tomorrow.getFullYear();
 
     let dateStr = '';
     if (isToday) {
@@ -333,12 +434,12 @@ class TaskService {
     } else if (isTomorrow) {
       dateStr = 'Tomorrow';
     } else {
-      dateStr = dueDate.toLocaleDateString();
+      dateStr = taskDate.toLocaleDateString();
     }
 
-    if (task.due_time) {
-      // Format time (assuming due_time is in HH:MM:SS format)
-      const timeParts = task.due_time.split(':');
+    if (task.time) {
+      // Format time (assuming time is in HH:MM:SS format)
+      const timeParts = task.time.split(':');
       let hours = parseInt(timeParts[0]);
       const minutes = timeParts[1];
       const ampm = hours >= 12 ? 'PM' : 'AM';
@@ -351,31 +452,205 @@ class TaskService {
 
     return dateStr;
   }
+
+  /**
+   * Get a task by ID
+   * @param taskId Task ID
+   * @returns Task with relations or null
+   */
+  async getTaskById(taskId: string): Promise<TaskWithRelations | null> {
+    try {
+      // Fetch the task
+      const { data: taskData, error: taskError } = await supabase
+        .from('todo_tasks')
+        .select('*, category:todo_categories(name, color, icon)')
+        .eq('id', taskId)
+        .single();
+
+      if (taskError) throw taskError;
+      if (!taskData) return null;
+
+      // Fetch subtasks
+      const { data: subtasksData, error: subtasksError } = await supabase
+        .from('todo_subtasks')
+        .select('*')
+        .eq('task_id', taskId);
+
+      if (subtasksError) throw subtasksError;
+
+      // Fetch attachments
+      const { data: attachmentsData, error: attachmentsError } = await supabase
+        .from('todo_attachments')
+        .select('*')
+        .eq('task_id', taskId);
+
+      // Don't throw on attachment error, just log it
+      if (attachmentsError) {
+        console.error('Error fetching attachments:', attachmentsError);
+      }
+
+      // Transform DB data to app format
+      const transformedTask = {
+        id: taskData.id.toString(),
+        title: taskData.title,
+        description: taskData.description,
+        priority: taskData.priority,
+        category: taskData.category?.name || null,
+        category_id: taskData.category_id?.toString() || null,
+        date: new Date(taskData.due_date),
+        time: taskData.due_time,
+        reminder: taskData.reminder_time ? new Date(taskData.reminder_time).toISOString() : null,
+        completed: taskData.status === 'completed',
+        user_id: taskData.user_id.toString(),
+        created_at: new Date(taskData.created_at),
+        updated_at: new Date(taskData.updated_at),
+        subtasks:
+          subtasksData?.map((subtask) => ({
+            id: subtask.id.toString(),
+            title: subtask.title,
+            completed: subtask.is_completed,
+            task_id: subtask.task_id.toString(),
+          })) || [],
+        attachments:
+          attachmentsData?.map((attachment) => ({
+            id: attachment.id.toString(),
+            uri: attachment.file_url,
+            type: attachment.file_type || 'unknown',
+            task_id: attachment.task_id.toString(),
+          })) || [],
+      };
+
+      return transformedTask as TaskWithRelations;
+    } catch (error) {
+      console.error('Error fetching task:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Update a task
+   * @param task Task with ID to update
+   * @returns Updated task
+   */
+  async updateTask(task: Partial<Task> & { id: string }): Promise<Task> {
+    try {
+      // Convert app format to DB format
+      const dbTask: Record<string, any> = {};
+
+      if (task.title) dbTask.title = task.title;
+      if (task.description !== undefined) dbTask.description = task.description;
+      if (task.priority) dbTask.priority = task.priority;
+      if (task.category_id) dbTask.category_id = task.category_id;
+      if (task.date) dbTask.due_date = formatISO(task.date).split('T')[0];
+      if (task.time) dbTask.due_time = task.time;
+      if (task.completed !== undefined) {
+        dbTask.status = task.completed ? 'completed' : 'pending';
+        if (task.completed) {
+          dbTask.completed_at = formatISO(new Date());
+        } else {
+          dbTask.completed_at = null;
+        }
+      }
+
+      const { data, error } = await supabase.from('todo_tasks').update(dbTask).eq('id', task.id).select('*').single();
+
+      if (error) throw error;
+
+      // Transform back to app format
+      return {
+        id: data.id.toString(),
+        title: data.title,
+        description: data.description,
+        priority: data.priority,
+        category_id: data.category_id?.toString() || null,
+        date: new Date(data.due_date),
+        time: data.due_time,
+        completed: data.status === 'completed',
+        user_id: data.user_id.toString(),
+        created_at: new Date(data.created_at),
+        updated_at: new Date(data.updated_at),
+      };
+    } catch (error) {
+      console.error('Error updating task:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a task
+   * @param taskId Task ID to delete
+   */
+  async deleteTask(taskId: string): Promise<void> {
+    try {
+      // In Supabase, if you've set up RLS and foreign key constraints with CASCADE,
+      // this will automatically delete related subtasks and attachments
+      const { error } = await supabase.from('todo_tasks').delete().eq('id', taskId);
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Toggle subtask completion
+   * @param subtaskId Subtask ID
+   * @param completed New completion status
+   * @returns Updated subtask
+   */
+  async toggleSubtaskCompletion(subtaskId: string, completed: boolean): Promise<Subtask> {
+    try {
+      const { data, error } = await supabase
+        .from('todo_subtasks')
+        .update({
+          is_completed: completed,
+          completed_at: completed ? formatISO(new Date()) : null,
+        })
+        .eq('id', subtaskId)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Transform to app format
+      return {
+        id: data.id.toString(),
+        title: data.title,
+        completed: data.is_completed,
+        task_id: data.task_id.toString(),
+      };
+    } catch (error) {
+      console.error('Error toggling subtask completion:', error);
+      throw error;
+    }
+  }
 }
 
 export const taskService = new TaskService();
 
-function subtractMinutes(dueTime: string | null, arg1: number): string | number | Date {
+function subtractMinutes(dueTime: string | null, minutes: number): string | number | Date {
   if (!dueTime) {
     return '';
   }
 
   const date = new Date(dueTime);
-  date.setMinutes(date.getMinutes() - arg1);
+  date.setMinutes(date.getMinutes() - minutes);
   return date;
 }
-function subtractHours(dueTime: string | null, arg1: number): string | number | Date {
+
+function subtractHours(dueTime: string | null, hours: number): string | number | Date {
   if (!dueTime) {
     return '';
   }
 
   const date = new Date(dueTime);
-  date.setHours(date.getHours() - arg1);
+  date.setHours(date.getHours() - hours);
   return date;
 }
 
-function subtractDays(dueDate: string, arg1: number): string | number | Date {
+function subtractDays(dueDate: string, days: number): string | number | Date {
   const date = new Date(dueDate);
-  date.setDate(date.getDate() - arg1);
+  date.setDate(date.getDate() - days);
   return date;
 }

@@ -1,8 +1,33 @@
 import { useState, useEffect, useCallback } from 'react';
-import { categoryService, Category, CategoryResult } from '../services/categoryService';
 import { supabase } from '../lib/supabase';
+import { z } from 'zod';
+import { useAuthStore } from 'store/authStore';
 
-// 钩子返回类型的接口
+// Category schema using Zod
+const CategorySchema = z.object({
+  id: z.union([z.string(), z.number()]).transform((v) => v.toString()),
+  name: z.string(),
+  color: z.string(),
+  icon: z.string().optional(),
+  user_id: z.union([z.string(), z.number()]).transform((v) => v.toString()),
+  created_at: z.string().transform((str) => new Date(str)),
+  updated_at: z.string().transform((str) => new Date(str)),
+  // Handle both is_featured and featured field names
+  featured: z
+    .union([
+      z.boolean(),
+      z.literal(1).transform(() => true),
+      z.literal(0).transform(() => false),
+      z.literal('true').transform(() => true),
+      z.literal('false').transform(() => false),
+    ])
+    .optional()
+    .default(false)
+    .or(z.object({ is_featured: z.boolean() }).transform((obj) => obj.is_featured)),
+});
+
+export type Category = z.infer<typeof CategorySchema>;
+
 interface UseCategoriesReturn {
   categories: Category[];
   featuredCategories: Category[];
@@ -11,83 +36,77 @@ interface UseCategoriesReturn {
   refetch: () => Promise<void>;
 }
 
-// 默认用户ID - 在真实应用中，这将来自auth上下文
-const DEFAULT_USER_ID = 1;
-
 export function useCategories(): UseCategoriesReturn {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [featuredCategories, setFeaturedCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 获取所有分类的函数
-  const fetchCategories = useCallback(async (): Promise<CategoryResult> => {
-    return await categoryService.getCategories(DEFAULT_USER_ID);
-  }, []);
+  // 从认证存储中获取用户
+  const { nativeUser, user, authMethod } = useAuthStore();
 
-  // 获取精选分类的函数
-  const fetchFeaturedCategories = useCallback(async (): Promise<CategoryResult> => {
-    return await categoryService.getFeaturedCategories(DEFAULT_USER_ID);
-  }, []);
+  // 根据认证方式获取用户ID
+  const getUserId = (): number => {
+    if (authMethod === 'native' && nativeUser) {
+      return nativeUser.id;
+    } else if (authMethod === 'supabase' && user) {
+      // 对于Supabase认证，我们需要从profiles表中获取user_id
+      // 这是一个简化 - 您可能需要根据实际的数据库结构进行调整
+      return parseInt(user.id);
+    }
+    throw new Error('用户未认证');
+  };
 
-  // 重新获取所有分类的函数
-  const refetch = useCallback(async () => {
+  // Fetch categories from Supabase
+  const fetchCategories = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
     try {
-      const [categoriesResult, featuredResult] = await Promise.all([
-        fetchCategories(),
-        fetchFeaturedCategories(),
-      ]);
+      const userId = getUserId();
 
-      if (categoriesResult.error) {
-        throw new Error(categoriesResult.error.message);
+      // Fetch categories from Supabase
+      const { data, error } = await supabase
+        .from('todo_categories')
+        .select('*')
+        .eq('user_id', userId)
+        .order('name', { ascending: true });
+
+      if (error) {
+        throw error;
       }
 
-      if (featuredResult.error) {
-        throw new Error(featuredResult.error.message);
-      }
+      // Parse the data with Zod schema
+      const parsedCategories = data.map((category) => {
+        try {
+          return CategorySchema.parse(category);
+        } catch (err) {
+          console.error('Error parsing category:', category, err);
+          throw err;
+        }
+      });
 
-      setCategories(categoriesResult.data || []);
-      setFeaturedCategories(featuredResult.data || []);
-    } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : '获取分类失败';
-      setError(errorMessage);
-      console.error('获取分类时出错:', e);
+      setCategories(parsedCategories);
+    } catch (err) {
+      console.error('Error fetching categories:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load categories');
     } finally {
       setIsLoading(false);
     }
-  }, [fetchCategories, fetchFeaturedCategories]);
+  }, []);
 
-  // 初始数据获取
+  // Initial fetch
   useEffect(() => {
-    refetch();
+    fetchCategories();
+  }, [fetchCategories]);
 
-    // 为分类表设置实时订阅
-    const categoriesSubscription = supabase
-      .channel('categories-changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'todo_categories' },
-        (payload) => {
-          // 当分类发生变化时，重新获取数据
-          refetch();
-        }
-      )
-      .subscribe();
-
-    // 清理订阅
-    return () => {
-      supabase.removeChannel(categoriesSubscription);
-    };
-  }, [refetch]);
+  // Get featured categories
+  const featuredCategories = categories.filter((category) => category.featured);
 
   return {
     categories,
     featuredCategories,
     isLoading,
     error,
-    refetch,
+    refetch: fetchCategories,
   };
-} 
+}

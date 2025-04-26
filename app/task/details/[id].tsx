@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,78 +7,90 @@ import {
   TouchableOpacity,
   Alert,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 
-// Define the SubTask interface
-interface SubTask {
-  id: string;
-  title: string;
-  completed: boolean;
-}
-
-// Define the Attachment interface
-interface Attachment {
-  id: string;
-  uri: string;
-  type: string;
-}
+// Import taskService and types
+import { taskService, TaskWithRelations, Subtask } from '@/services/taskService';
 
 // Define the Priority type
 type Priority = 'high' | 'medium' | 'low';
 
-// Mock task data (in a real app, this would come from a state management solution like Zustand)
-const mockTask = {
-  id: '1',
-  title: 'Complete project proposal',
-  description: 'Finalize the project proposal for the client meeting. Include budget estimates, timeline, and resource allocation. Make sure to highlight the key benefits and ROI projections.',
-  priority: 'high' as Priority,
-  category: 'Work',
-  date: new Date(),
-  time: '9:00 AM - 11:00 AM',
-  reminder: '30 min before',
-  subtasks: [
-    { id: '1', title: 'Research market trends', completed: true },
-    { id: '2', title: 'Draft initial proposal', completed: true },
-    { id: '3', title: 'Create budget estimates', completed: false },
-    { id: '4', title: 'Review with team', completed: false },
-  ],
-  attachments: [
-    {
-      id: '1',
-      uri: 'https://images.unsplash.com/photo-1572044162444-ad60f128bdea?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8ZG9jdW1lbnR8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60',
-      type: 'image',
-    },
-    {
-      id: '2',
-      uri: 'https://images.unsplash.com/photo-1664575599736-c5197c684153?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxzZWFyY2h8MTJ8fGV4Y2VsJTIwc2hlZXR8ZW58MHx8MHx8&auto=format&fit=crop&w=500&q=60',
-      type: 'image',
-    },
-  ],
-  completed: false,
-};
-
 export default function TaskDetailScreen() {
   const { id: taskId } = useLocalSearchParams();
-
   const insets = useSafeAreaInsets();
-  const [task, setTask] = useState(mockTask);
+
+  const [task, setTask] = useState<TaskWithRelations | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (!taskId) return;
+    fetchTaskDetails(taskId.toString());
+  }, [taskId]);
+
+  // Function to fetch task details from Supabase using taskService
+  async function fetchTaskDetails(id: string) {
+    if (!id) return;
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const taskData = await taskService.getTaskById(id);
+      if (!taskData) {
+        throw new Error('Task not found');
+      }
+
+      setTask(taskData);
+    } catch (err) {
+      console.error('Error fetching task details:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load task details');
+    } finally {
+      setIsLoading(false);
+    }
+  }
 
   // Function to toggle subtask completion
-  const toggleSubtaskCompletion = (subtaskId: string) => {
-    setTask(prevTask => ({
-      ...prevTask,
-      subtasks: prevTask.subtasks.map(st =>
-        st.id === subtaskId ? { ...st, completed: !st.completed } : st
-      )
-    }));
+  const toggleSubtaskCompletion = async (subtaskId: string) => {
+    if (!task) return;
+
+    try {
+      // Find the current subtask
+      const subtask = task.subtasks?.find(st => st.id === subtaskId);
+      if (!subtask) return;
+
+      // Optimistic UI update
+      setTask(prevTask => {
+        if (!prevTask) return null;
+
+        return {
+          ...prevTask,
+          subtasks: prevTask.subtasks?.map(st =>
+            st.id === subtaskId ? { ...st, completed: !st.completed } : st
+          ),
+        };
+      });
+
+      // Update in Supabase via taskService
+      await taskService.toggleSubtaskCompletion(subtaskId, !subtask.completed);
+    } catch (err) {
+      console.error('Error updating subtask:', err);
+      Alert.alert('Error', 'Failed to update subtask');
+      // Revert the optimistic update
+      if (taskId) fetchTaskDetails(taskId.toString());
+    }
   };
 
   // Function to mark task as complete
-  const completeTask = () => {
+  const completeTask = async () => {
+    if (!task) return;
+
     Alert.alert(
       'Complete Task',
       'Are you sure you want to mark this task as complete?',
@@ -86,12 +98,23 @@ export default function TaskDetailScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Complete',
-          onPress: () => {
-            setTask(prevTask => ({ ...prevTask, completed: true }));
-            Alert.alert('Success', 'Task marked as complete');
-            // In a real app, you would update the task in your state management
-            // And navigate back after a delay
-            setTimeout(() => router.back(), 1500);
+          onPress: async () => {
+            setIsSaving(true);
+            try {
+              await taskService.updateTask({
+                id: task.id,
+                completed: true
+              });
+
+              setTask(prevTask => prevTask ? { ...prevTask, completed: true } : null);
+              Alert.alert('Success', 'Task marked as complete');
+              setTimeout(() => router.back(), 1500);
+            } catch (err) {
+              console.error('Error completing task:', err);
+              Alert.alert('Error', 'Failed to complete task');
+            } finally {
+              setIsSaving(false);
+            }
           },
         },
       ]
@@ -108,6 +131,8 @@ export default function TaskDetailScreen() {
 
   // Function to delete task
   const deleteTask = () => {
+    if (!task) return;
+
     Alert.alert(
       'Delete Task',
       'Are you sure you want to delete this task? This action cannot be undone.',
@@ -116,10 +141,18 @@ export default function TaskDetailScreen() {
         {
           text: 'Delete',
           style: 'destructive',
-          onPress: () => {
-            // In a real app, you would delete the task from your state management
-            Alert.alert('Success', 'Task deleted successfully');
-            setTimeout(() => router.back(), 1500);
+          onPress: async () => {
+            setIsSaving(true);
+            try {
+              await taskService.deleteTask(task.id);
+              Alert.alert('Success', 'Task deleted successfully');
+              setTimeout(() => router.back(), 1500);
+            } catch (err) {
+              console.error('Error deleting task:', err);
+              Alert.alert('Error', 'Failed to delete task');
+            } finally {
+              setIsSaving(false);
+            }
           },
         },
       ]
@@ -127,8 +160,8 @@ export default function TaskDetailScreen() {
   };
 
   // Calculate completed subtasks
-  const completedSubtasks = task.subtasks.filter(st => st.completed).length;
-  const totalSubtasks = task.subtasks.length;
+  const completedSubtasks = task?.subtasks?.filter(st => st.completed)?.length || 0;
+  const totalSubtasks = task?.subtasks?.length || 0;
 
   // Format date
   const formatDate = (date: Date) => {
@@ -148,8 +181,8 @@ export default function TaskDetailScreen() {
   };
 
   // Get priority styles
-  const getPriorityStyles = () => {
-    switch (task.priority) {
+  const getPriorityStyles = (priority: Priority) => {
+    switch (priority) {
       case 'high':
         return {
           backgroundColor: '#ffebe6',
@@ -173,7 +206,44 @@ export default function TaskDetailScreen() {
     }
   };
 
-  const priorityStyles = getPriorityStyles();
+  const priorityStyles = task ? getPriorityStyles(task.priority) : { backgroundColor: '#e3f2fd', color: '#007aff' };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <ActivityIndicator size="large" color="#007aff" />
+        <Text style={styles.loadingText}>Loading task details...</Text>
+      </View>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => taskId && fetchTaskDetails(taskId.toString())}
+        >
+          <Text style={styles.retryButtonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // No task found
+  if (!task) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Text style={styles.errorText}>Task not found</Text>
+        <TouchableOpacity style={styles.retryButton} onPress={() => router.back()}>
+          <Text style={styles.retryButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -183,7 +253,7 @@ export default function TaskDetailScreen() {
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <FontAwesome name="chevron-left" size={16} color="#007aff" />
-          <Text style={styles.backButtonText}>Tasks {taskId}</Text>
+          <Text style={styles.backButtonText}>Tasks</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Task Details</Text>
         <View style={{ width: 60 }} />
@@ -218,58 +288,70 @@ export default function TaskDetailScreen() {
             <View style={styles.metaItem}>
               <FontAwesome name="calendar" size={14} color="#007aff" style={styles.metaIcon} />
               <Text style={styles.metaText}>
-                {formatDate(task.date)}, {task.time}
+                {formatDate(task.date)}{task.time ? `, ${task.time}` : ''}
               </Text>
             </View>
           </View>
 
           <View style={styles.taskMeta}>
-            <View style={styles.metaItem}>
-              <FontAwesome name="folder" size={14} color="#007aff" style={styles.metaIcon} />
-              <Text style={styles.metaText}>{task.category}</Text>
-            </View>
-            <View style={styles.metaItem}>
-              <FontAwesome name="bell" size={14} color="#007aff" style={styles.metaIcon} />
-              <Text style={styles.metaText}>{task.reminder}</Text>
-            </View>
+            {task.category && (
+              <View style={styles.metaItem}>
+                <FontAwesome name="folder" size={14} color="#007aff" style={styles.metaIcon} />
+                <Text style={styles.metaText}>{task.category}</Text>
+              </View>
+            )}
+            {task.reminder && (
+              <View style={styles.metaItem}>
+                <FontAwesome name="bell" size={14} color="#007aff" style={styles.metaIcon} />
+                <Text style={styles.metaText}>{task.reminder}</Text>
+              </View>
+            )}
           </View>
 
           {/* Description Section */}
-          <Text style={styles.sectionTitle}>Description</Text>
-          <Text style={styles.taskDescription}>{task.description}</Text>
+          {task.description && (
+            <>
+              <Text style={styles.sectionTitle}>Description</Text>
+              <Text style={styles.taskDescription}>{task.description}</Text>
+            </>
+          )}
 
           {/* Subtasks Section */}
-          <Text style={styles.sectionTitle}>
-            Subtasks ({completedSubtasks}/{totalSubtasks})
-          </Text>
-          <View style={styles.subtasksList}>
-            {task.subtasks.map((subtask) => (
-              <TouchableOpacity
-                key={subtask.id}
-                style={styles.subtaskItem}
-                onPress={() => toggleSubtaskCompletion(subtask.id)}
-              >
-                <View
-                  style={[
-                    styles.subtaskCheckbox,
-                    subtask.completed && styles.subtaskCheckboxChecked
-                  ]}
-                >
-                  {subtask.completed && (
-                    <FontAwesome name="check" size={12} color="#FFFFFF" />
-                  )}
-                </View>
-                <Text
-                  style={[
-                    styles.subtaskTitle,
-                    subtask.completed && styles.subtaskTitleCompleted
-                  ]}
-                >
-                  {subtask.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {task.subtasks && task.subtasks.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>
+                Subtasks ({completedSubtasks}/{totalSubtasks})
+              </Text>
+              <View style={styles.subtasksList}>
+                {task.subtasks.map((subtask) => (
+                  <TouchableOpacity
+                    key={subtask.id}
+                    style={styles.subtaskItem}
+                    onPress={() => toggleSubtaskCompletion(subtask.id)}
+                  >
+                    <View
+                      style={[
+                        styles.subtaskCheckbox,
+                        subtask.completed && styles.subtaskCheckboxChecked
+                      ]}
+                    >
+                      {subtask.completed && (
+                        <FontAwesome name="check" size={12} color="#FFFFFF" />
+                      )}
+                    </View>
+                    <Text
+                      style={[
+                        styles.subtaskTitle,
+                        subtask.completed && styles.subtaskTitleCompleted
+                      ]}
+                    >
+                      {subtask.title}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </>
+          )}
 
           {/* Attachments Section */}
           {task.attachments && task.attachments.length > 0 && (
@@ -298,24 +380,27 @@ export default function TaskDetailScreen() {
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
             <TouchableOpacity
-              style={[styles.actionBtn, styles.btnComplete]}
+              style={[styles.actionBtn, styles.btnComplete, (isSaving || task.completed) && styles.disabledButton]}
               onPress={completeTask}
+              disabled={isSaving || task.completed}
             >
               <FontAwesome name="check" size={16} color="#FFFFFF" style={styles.actionBtnIcon} />
-              <Text style={styles.btnCompleteText}>完成</Text>
+              <Text style={styles.btnCompleteText}>{task.completed ? '已完成' : '完成'}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionBtn, styles.btnEdit]}
+              style={[styles.actionBtn, styles.btnEdit, isSaving && styles.disabledButton]}
               onPress={editTask}
+              disabled={isSaving}
             >
               <FontAwesome name="edit" size={16} color="#3A3A3C" style={styles.actionBtnIcon} />
               <Text style={styles.btnEditText}>修改</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionBtn, styles.btnDelete]}
+              style={[styles.actionBtn, styles.btnDelete, isSaving && styles.disabledButton]}
               onPress={deleteTask}
+              disabled={isSaving}
             >
               <FontAwesome name="trash" size={16} color="#FFFFFF" style={styles.actionBtnIcon} />
               <Text style={styles.btnDeleteText}>删除</Text>
@@ -331,6 +416,32 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+  },
+  centerContent: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#8E8E93',
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    backgroundColor: '#007aff',
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   header: {
     height: 44,
@@ -489,7 +600,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    // marginHorizontal: 6,
   },
   actionBtnIcon: {
     marginRight: 8,
@@ -517,5 +627,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 16,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 });
