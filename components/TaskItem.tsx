@@ -1,15 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 interface TaskItemProps {
+  id: string;
   title: string;
   priority: 'high' | 'medium' | 'low';
   time: string;
-  onPress: () => void;
+  onPress?: (id: string) => void;
 }
 
-export function TaskItem({ title, priority, time, onPress }: TaskItemProps) {
+export function TaskItem({ id, title, priority, time, onPress }: TaskItemProps) {
   // Define border colors based on priority
   const getBorderColor = () => {
     switch (priority) {
@@ -57,8 +59,15 @@ export function TaskItem({ title, priority, time, onPress }: TaskItemProps) {
   const borderColor = getBorderColor();
   const priorityColors = getPriorityColors();
 
+  // Handle task item press
+  const handlePress = () => {
+    if (onPress) {
+      onPress(id);
+    }
+  };
+
   return (
-    <TouchableOpacity style={styles.taskItem} onPress={onPress}>
+    <TouchableOpacity style={styles.taskItem} onPress={handlePress}>
       <View style={[styles.taskCheckbox, { borderColor }]}>
         <FontAwesome name="check" size={12} color="white" />
       </View>

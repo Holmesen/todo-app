@@ -9,6 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
 // Components
 import { SearchBar } from '../../components/SearchBar';
@@ -68,8 +69,9 @@ export default function HomeScreen() {
   const [activeFilterId, setActiveFilterId] = useState('all');
 
   const handleTaskPress = (taskId: string) => {
-    // For now, just show an alert since we haven't set up the task detail screen yet
-    Alert.alert('Task Selected', `You selected task #${taskId}`);
+    // Navigate to the task detail screen
+    // We're using string format to avoid the pathname type checking issues
+    router.push(`/task/details/${taskId}`);
   };
 
   const handleSeeAllPress = (sectionType: 'today' | 'upcoming') => {
@@ -118,10 +120,11 @@ export default function HomeScreen() {
           {TODAY_TASKS.map((task) => (
             <TaskItem
               key={task.id}
+              id={task.id}
               title={task.title}
               priority={task.priority as 'high' | 'medium' | 'low'}
               time={task.time}
-              onPress={() => handleTaskPress(task.id)}
+              onPress={handleTaskPress}
             />
           ))}
         </TaskSection>
@@ -134,10 +137,11 @@ export default function HomeScreen() {
           {UPCOMING_TASKS.map((task) => (
             <TaskItem
               key={task.id}
+              id={task.id}
               title={task.title}
               priority={task.priority as 'high' | 'medium' | 'low'}
               time={task.time}
-              onPress={() => handleTaskPress(task.id)}
+              onPress={handleTaskPress}
             />
           ))}
         </TaskSection>
