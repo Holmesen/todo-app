@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   StatusBar,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -17,56 +18,55 @@ import { ActionButton } from '../../components/ActionButton';
 import { TaskSection } from '../../components/TaskSection';
 import { TaskItem } from '../../components/TaskItem';
 
-// Mock Data
-const QUICK_ACTION_BUTTONS = [
-  { id: 'all', label: 'All' },
-  { id: 'today', label: 'Today' },
-  { id: 'upcoming', label: 'Upcoming' },
-  { id: 'work', label: 'Work' },
-  { id: 'personal', label: 'Personal' },
-  { id: 'shopping', label: 'Shopping' },
-];
+// Hooks
+import { useTasks } from '../../hooks/useTasks';
+import { useCategories } from '../../hooks/useCategories';
+import { taskService } from '../../services/taskService';
 
-const TODAY_TASKS = [
-  {
-    id: '1',
-    title: 'Complete project proposal',
-    priority: 'high',
-    time: '9:00 AM - 11:00 AM',
-  },
-  {
-    id: '2',
-    title: 'Weekly team meeting',
-    priority: 'medium',
-    time: '1:00 PM - 2:00 PM',
-  },
-  {
-    id: '3',
-    title: 'Call with client',
-    priority: 'low',
-    time: '3:30 PM - 4:00 PM',
-  },
-];
-
-const UPCOMING_TASKS = [
-  {
-    id: '4',
-    title: 'Prepare presentation slides',
-    priority: 'high',
-    time: 'Tomorrow, 10:00 AM',
-  },
-  {
-    id: '5',
-    title: 'Review quarterly reports',
-    priority: 'medium',
-    time: 'Tomorrow, 2:00 PM',
-  },
+// Default quick action buttons
+const DEFAULT_QUICK_ACTIONS = [
+  { id: 'all', label: '全部', icon: 'list', color: 'blue' },
+  { id: 'today', label: '今天', icon: 'calendar', color: 'green' },
+  { id: 'upcoming', label: '即将到来', icon: 'clock-o', color: 'orange' },
 ];
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilterId, setActiveFilterId] = useState('all');
+
+  // Use our tasks hook to fetch data from Supabase
+  const {
+    todayTasks,
+    upcomingTasks,
+    filteredTasks,
+    isLoading: isTasksLoading,
+    error: tasksError,
+    refetch: refetchTasks,
+    setActiveFilter
+  } = useTasks();
+
+  // Use our categories hook to fetch categories from Supabase
+  const {
+    featuredCategories,
+    isLoading: isCategoriesLoading,
+    error: categoriesError,
+  } = useCategories();
+
+  // Combined loading and error states
+  const isLoading = isTasksLoading || isCategoriesLoading;
+  const error = tasksError || categoriesError;
+
+  // Combine default quick actions with featured categories
+  const quickActionButtons = useMemo(() => {
+    const categoryButtons = featuredCategories.map(category => ({
+      id: category.id.toString(),
+      label: category.name,
+      color: category.color,
+      icon: category.icon,
+    }));
+
+    return [...DEFAULT_QUICK_ACTIONS, ...categoryButtons];
+  }, [featuredCategories]);
 
   const handleTaskPress = (taskId: string) => {
     // Navigate to the task detail screen
@@ -75,8 +75,10 @@ export default function HomeScreen() {
   };
 
   const handleSeeAllPress = (sectionType: 'today' | 'upcoming') => {
+    // Update active filter based on which section was pressed
+    setActiveFilter(sectionType);
     // For now, just show an alert since we haven't set up the tasks list screen yet
-    Alert.alert('See All Pressed', `View all ${sectionType} tasks`);
+    Alert.alert('查看全部', `查看所有${sectionType === 'today' ? '今天' : '即将到来'}的任务`);
   };
 
   return (
@@ -90,7 +92,7 @@ export default function HomeScreen() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.header}>Today</Text>
+        <Text style={styles.header}>今天</Text>
 
         {/* Search Bar */}
         <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
@@ -102,49 +104,79 @@ export default function HomeScreen() {
           style={styles.actionButtonsContainer}
           contentContainerStyle={styles.actionButtons}
         >
-          {QUICK_ACTION_BUTTONS.map((button) => (
+          {quickActionButtons.map((button) => (
             <ActionButton
               key={button.id}
               label={button.label}
-              isActive={activeFilterId === button.id}
-              onPress={() => setActiveFilterId(button.id)}
+              color={button.color}
+              icon={button.icon}
+              isActive={button.id === 'all' ? filteredTasks === todayTasks : false}
+              onPress={() => setActiveFilter(button.id)}
             />
           ))}
         </ScrollView>
 
+        {/* Error State */}
+        {error && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>
+              {error}。下拉刷新。
+            </Text>
+          </View>
+        )}
+
+        {/* Loading State */}
+        {isLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#007AFF" />
+          </View>
+        )}
+
         {/* Today's Tasks Section */}
-        <TaskSection
-          title="Today's Tasks"
-          onSeeAll={() => handleSeeAllPress('today')}
-        >
-          {TODAY_TASKS.map((task) => (
-            <TaskItem
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              priority={task.priority as 'high' | 'medium' | 'low'}
-              time={task.time}
-              onPress={handleTaskPress}
-            />
-          ))}
-        </TaskSection>
+        {!isLoading && !error && (
+          <TaskSection
+            title="今天的任务"
+            onSeeAll={() => handleSeeAllPress('today')}
+          >
+            {todayTasks.length === 0 ? (
+              <Text style={styles.emptyStateText}>今天没有安排任务</Text>
+            ) : (
+              todayTasks.map((task) => (
+                <TaskItem
+                  key={task.id?.toString()}
+                  id={task.id?.toString() || ''}
+                  title={task.title}
+                  priority={task.priority}
+                  time={taskService.formatTaskTime(task)}
+                  onPress={handleTaskPress}
+                />
+              ))
+            )}
+          </TaskSection>
+        )}
 
         {/* Upcoming Tasks Section */}
-        <TaskSection
-          title="Upcoming"
-          onSeeAll={() => handleSeeAllPress('upcoming')}
-        >
-          {UPCOMING_TASKS.map((task) => (
-            <TaskItem
-              key={task.id}
-              id={task.id}
-              title={task.title}
-              priority={task.priority as 'high' | 'medium' | 'low'}
-              time={task.time}
-              onPress={handleTaskPress}
-            />
-          ))}
-        </TaskSection>
+        {!isLoading && !error && (
+          <TaskSection
+            title="即将到来"
+            onSeeAll={() => handleSeeAllPress('upcoming')}
+          >
+            {upcomingTasks.length === 0 ? (
+              <Text style={styles.emptyStateText}>没有即将到来的任务</Text>
+            ) : (
+              upcomingTasks.map((task) => (
+                <TaskItem
+                  key={task.id?.toString()}
+                  id={task.id?.toString() || ''}
+                  title={task.title}
+                  priority={task.priority}
+                  time={taskService.formatTaskTime(task)}
+                  onPress={handleTaskPress}
+                />
+              ))
+            )}
+          </TaskSection>
+        )}
       </ScrollView>
     </View>
   );
@@ -171,5 +203,25 @@ const styles = StyleSheet.create({
   },
   actionButtons: {
     paddingVertical: 4,
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorContainer: {
+    padding: 20,
+    backgroundColor: '#FFEEEE',
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  errorText: {
+    color: '#FF3B30',
+    textAlign: 'center',
+  },
+  emptyStateText: {
+    textAlign: 'center',
+    color: '#8E8E93',
+    padding: 20,
+    fontSize: 16,
   },
 }); 

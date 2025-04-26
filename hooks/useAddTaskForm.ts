@@ -71,7 +71,7 @@ export function useAddTaskForm() {
     try {
       setCategoriesLoading(true);
       const userId = getUserId();
-      const { data, error } = await categoryService.getUserCategories(userId);
+      const { data, error } = await categoryService.getCategories(userId);
 
       if (error) throw error;
       if (data) {

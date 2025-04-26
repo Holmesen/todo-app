@@ -13,7 +13,7 @@ export function TaskSection({ title, onSeeAll, children }: TaskSectionProps) {
       <View style={styles.headerContainer}>
         <Text style={styles.title}>{title}</Text>
         <TouchableOpacity onPress={onSeeAll}>
-          <Text style={styles.seeAllText}>See All</Text>
+          <Text style={styles.seeAllText}>查看全部</Text>
         </TouchableOpacity>
       </View>
       <View style={styles.content}>{children}</View>

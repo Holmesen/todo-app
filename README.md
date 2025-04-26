@@ -1,124 +1,127 @@
-# TodoList App
+# 📝 Todo App
 
-一个基于 React Native 和 Expo 构建的待办事项应用，使用 Supabase 提供身份验证和数据存储功能。
+A beautiful and functional Todo application built with React Native, Expo, and Supabase.
 
-## 功能特性
+## 🌟 Features
 
-- 多种用户认证方式:
-  - Supabase Auth 认证 (默认)
-  - 原生数据库用户认证 (基于自定义用户表)
-- 社交账号登录 (Apple、Google)
-- 待办事项管理
-- ...
+- ✅ Create, update, and delete tasks
+- 📋 Organize tasks by categories
+- 🗓️ View today's and upcoming tasks
+- 🔔 Set reminders for tasks
+- 🎨 Customize categories with colors and icons
+- 📱 Beautiful, cross-platform UI that works on iOS, Android, and Web
 
-## 开始使用
+## 🛠️ Technologies Used
 
-### 前提条件
+- **Frontend**: React Native, Expo
+- **Backend**: Supabase (PostgreSQL)
+- **State Management**: React Query, React Context
+- **UI**: Custom components with thoughtful design
+- **Navigation**: Expo Router
+- **Data Fetching**: Supabase JS Client with real-time subscriptions
 
-- Node.js (推荐最新 LTS 版本)
-- npm 或 yarn
-- Expo CLI (`npm install -g expo-cli`)
-- [Supabase 账号](https://supabase.com/)
+## 📋 Prerequisites
 
-### 安装
+- Node.js (v14 or newer)
+- Yarn or npm
+- Expo CLI
+- A Supabase account and project
 
-1. 克隆仓库：
+## 🚀 Getting Started
+
+### 1. Clone the repository
 
 ```bash
-git clone <仓库URL>
+git clone https://github.com/Holmesen/todo-app.git
 cd todo-app
 ```
 
-2. 安装依赖：
+### 2. Set up Supabase
 
-```bash
-npm install
-# 或
-yarn
-```
+1. Create a new Supabase project at [https://supabase.com](https://supabase.com)
+2. Import the database schema from `postgresql/schema.sql` in the SQL Editor
+3. Run the seed data script from `scripts/seed-data.sql`
+4. Copy your Supabase URL and anonymous key from the API settings
 
-### Supabase 配置
+### 3. Configure the app
 
-1. 在 [Supabase](https://supabase.com/) 创建一个新项目
-2. 在项目设置中找到 API URL 和 anon public API key
-3. 编辑 `app/lib/supabase.ts` 文件，替换 URL 和 API key：
+Update the Supabase configuration in `lib/supabase.ts` with your project URL and anon key:
 
 ```typescript
-const supabaseUrl = '你的 Supabase URL';
-const supabaseAnonKey = '你的 Supabase 匿名密钥';
+const supabaseUrl = 'YOUR_SUPABASE_URL';
+const supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY';
 ```
 
-### 数据库设置
-
-在 Supabase 中，需要创建用户表和任务表：
-
-1. **用户表**: 运行 `setup/create_users_table.sql` 中的 SQL 命令创建自定义用户表
-2. **任务表**: 运行以下 SQL 创建任务表:
-
-```sql
--- 创建 todos 表
-CREATE TABLE todos (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) NOT NULL,
-  title TEXT NOT NULL,
-  completed BOOLEAN NOT NULL DEFAULT FALSE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
-);
-
--- 行级安全策略
-ALTER TABLE todos ENABLE ROW LEVEL SECURITY;
-
--- 策略: 只允许查看和修改自己的待办事项
-CREATE POLICY "Users can only access their own todos" ON todos
-  FOR ALL USING (auth.uid() = user_id);
-
--- 触发器: 自动更新 updated_at 字段
-CREATE TRIGGER update_todos_updated_at
-  BEFORE UPDATE ON todos
-  FOR EACH ROW
-  EXECUTE PROCEDURE moddatetime(updated_at);
-```
-
-### 启动项目
+### 4. Install dependencies and run
 
 ```bash
-npm start
-# 或
+# Install dependencies
+yarn install
+
+# Run the app
 yarn start
 ```
 
-通过 Expo Go 应用扫描二维码在移动设备上运行，或使用 iOS/Android 模拟器。
+## 📱 Using the App
 
-## 多种认证方式
+After starting the app, you can:
 
-应用程序支持两种不同的认证方式：
+- View and filter tasks by categories
+- Add new tasks
+- Mark tasks as completed
+- Set reminders for important tasks
+- Create and manage custom categories
 
-### 1. Supabase Auth 认证 (默认)
+## 🧪 Default Test Account
 
-- 使用 Supabase 提供的内置认证系统
-- 用户数据存储在 `auth.users` 表中
-- 支持电子邮件验证和密码重置等高级功能
-- 支持社交媒体登录 (如 Google, Apple 等)
+The seed script creates a demo user with the following credentials:
 
-### 2. 原生数据库用户认证
+- **Email**: demo@example.com
+- **Password**: demo123
 
-- 使用自定义 `users` 表存储用户数据
-- 密码使用 bcrypt 加密存储
-- 支持更多自定义用户字段和设置
-- 更灵活的用户数据管理
+## 📁 Project Structure
 
-用户可以在登录界面切换这两种认证方式，应用将根据用户选择的认证方式相应地处理登录和注册请求。
+```
+todo-app/
+├── app/ - Expo Router app directory
+├── assets/ - Images and other static assets
+├── components/ - Reusable UI components
+├── context/ - React Context for state management
+├── hooks/ - Custom React hooks
+├── lib/ - Utility functions and Supabase client
+├── postgresql/ - Database schema
+├── scripts/ - Setup and utility scripts
+└── services/ - API service functions
+```
 
-## 项目架构
+## 🧩 Key Components
 
-- `/app` - 应用程序主目录
-  - `/(app)` - 经过身份验证后的主应用屏幕
-  - `/screens` - 登录和注册屏幕
-  - `/lib` - 工具和配置
-  - `/store` - 状态管理 (Zustand)
-  - `/context` - React 上下文提供者
+- **TaskItem**: Displays a single task with priority, due time, and action buttons
+- **TaskSection**: Groups tasks by section (Today, Upcoming)
+- **ActionButton**: Category filter buttons with color and icon support
+- **SearchBar**: Allows searching through tasks
 
-## 许可证
+## 🔄 State Management
 
-[MIT](LICENSE)
+The app uses React hooks for state management, with Supabase's real-time subscriptions to keep the UI in sync with the database.
+
+## 🔒 Authentication
+
+Authentication is managed through Supabase Auth, with support for email/password and OAuth providers.
+
+## 📅 Future Enhancements
+
+- Task sharing and collaboration
+- Advanced filtering and sorting options
+- Dark mode support
+- Push notifications for reminders
+- Offline support with data synchronization
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 👏 Acknowledgements
+
+- Icons from [Font Awesome](https://fontawesome.com/)
+- UI inspiration from various productivity apps

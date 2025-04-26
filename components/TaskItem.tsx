@@ -12,7 +12,7 @@ interface TaskItemProps {
 }
 
 export function TaskItem({ id, title, priority, time, onPress }: TaskItemProps) {
-  // Define border colors based on priority
+  // 根据优先级定义边框颜色
   const getBorderColor = () => {
     switch (priority) {
       case 'high':
@@ -26,7 +26,7 @@ export function TaskItem({ id, title, priority, time, onPress }: TaskItemProps) 
     }
   };
 
-  // Define priority label colors
+  // 定义优先级标签颜色
   const getPriorityColors = () => {
     switch (priority) {
       case 'high':
@@ -59,10 +59,24 @@ export function TaskItem({ id, title, priority, time, onPress }: TaskItemProps) 
   const borderColor = getBorderColor();
   const priorityColors = getPriorityColors();
 
-  // Handle task item press
+  // 处理任务项点击
   const handlePress = () => {
     if (onPress) {
       onPress(id);
+    }
+  };
+
+  // 翻译优先级显示文本
+  const getPriorityText = (priority: string) => {
+    switch (priority) {
+      case 'high':
+        return '高';
+      case 'medium':
+        return '中';
+      case 'low':
+        return '低';
+      default:
+        return priority.charAt(0).toUpperCase() + priority.slice(1);
     }
   };
 
@@ -84,7 +98,7 @@ export function TaskItem({ id, title, priority, time, onPress }: TaskItemProps) 
             ]}
           >
             <Text style={{ color: priorityColors.text, fontSize: 12, fontWeight: '500' }}>
-              {priority.charAt(0).toUpperCase() + priority.slice(1)}
+              {getPriorityText(priority)}
             </Text>
           </View>
           <Text style={styles.taskTime}>{time}</Text>
