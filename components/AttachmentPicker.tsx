@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
+// 附件选择器属性接口
 interface AttachmentPickerProps {
   onPress: () => void;
 }
@@ -9,10 +10,10 @@ interface AttachmentPickerProps {
 export function AttachmentPicker({ onPress }: AttachmentPickerProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Attachments</Text>
-      <TouchableOpacity style={styles.attachmentArea} onPress={onPress}>
-        <FontAwesome5 name="file-upload" size={28} color="#8E8E93" style={styles.attachmentIcon} />
-        <Text style={styles.attachmentText}>Tap to add files</Text>
+      <Text style={styles.label}>附件</Text>
+      <TouchableOpacity style={styles.button} onPress={onPress}>
+        <Ionicons name="attach" size={20} color="#007AFF" />
+        <Text style={styles.buttonText}>添加附件</Text>
       </TouchableOpacity>
     </View>
   );
@@ -28,20 +29,20 @@ const styles = StyleSheet.create({
     color: '#3A3A3C',
     marginBottom: 8,
   },
-  attachmentArea: {
-    marginTop: 8,
-    borderWidth: 2,
-    borderStyle: 'dashed',
-    borderColor: '#D1D1D6',
-    borderRadius: 10,
-    padding: 24,
+  button: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 12,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#007AFF',
+    borderRadius: 10,
+    backgroundColor: '#F0F7FF',
   },
-  attachmentIcon: {
-    marginBottom: 12,
-  },
-  attachmentText: {
-    color: '#8E8E93',
+  buttonText: {
+    fontSize: 15,
+    color: '#007AFF',
+    marginLeft: 8,
   },
 }); 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   StyleSheet,
@@ -13,8 +13,9 @@ import {
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 
-// Custom Components
+// 自定义组件
 import { HeaderBar } from '../../components/HeaderBar';
 import { FormInput } from '../../components/FormInput';
 import { FormSelect } from '../../components/FormSelect';
@@ -23,37 +24,10 @@ import { PrioritySelector } from '../../components/PrioritySelector';
 import { SubtaskList } from '../../components/Subtask';
 import { AttachmentPicker } from '../../components/AttachmentPicker';
 
-// Types for form data
-type TaskFormData = {
-  title: string;
-  description: string;
-  category: string;
-  date: Date;
-  time: Date;
-  priority: 'low' | 'medium' | 'high';
-  reminder: string;
-  subtasks: string[];
-};
+// 自定义钩子
+import { useAddTaskForm } from '../../hooks/useAddTaskForm';
 
-// Mock data for form selects
-const CATEGORIES = [
-  { label: 'Work', value: 'work' },
-  { label: 'Personal', value: 'personal' },
-  { label: 'Shopping', value: 'shopping' },
-  { label: 'Health', value: 'health' },
-  { label: 'Finance', value: 'finance' },
-];
-
-const REMINDERS = [
-  { label: 'None', value: 'none' },
-  { label: 'At time of task', value: 'at_time' },
-  { label: '5 minutes before', value: '5min' },
-  { label: '15 minutes before', value: '15min' },
-  { label: '30 minutes before', value: '30min' },
-  { label: '1 hour before', value: '1hour' },
-  { label: '1 day before', value: '1day' },
-];
-
+// 按钮组件
 interface ButtonProps {
   title: string;
   onPress: () => void;
@@ -61,6 +35,7 @@ interface ButtonProps {
   loading?: boolean;
   disabled?: boolean;
 }
+
 function Button({
   title,
   onPress,
@@ -100,67 +75,58 @@ function Button({
 export default function AddTaskScreen() {
   const insets = useSafeAreaInsets();
 
-  // State for form data
-  const [formData, setFormData] = useState<TaskFormData>({
-    title: '',
-    description: '',
-    category: 'work',
-    date: new Date(),
-    time: new Date(),
-    priority: 'high',
-    reminder: '30min',
-    subtasks: ['Research market trends', 'Draft initial proposal'],
-  });
+  // 使用自定义表单钩子
+  const {
+    formData,
+    updateFormData,
+    newSubtask,
+    setNewSubtask,
+    showSubtaskInput,
+    setShowSubtaskInput,
+    handleAddSubtask,
+    handleRemoveSubtask,
+    handleSubmit,
+    loading,
+    categories,
+    categoriesLoading,
+    fetchCategories,
+  } = useAddTaskForm();
 
-  // State for adding new subtask
-  const [newSubtask, setNewSubtask] = useState('');
-  const [showSubtaskInput, setShowSubtaskInput] = useState(false);
+  // 组件挂载时获取分类数据
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
-  // Handle form submission
-  const handleSave = () => {
-    // Validate form
-    if (!formData.title.trim()) {
-      Alert.alert('Error', 'Please enter a task title');
-      return;
-    }
+  // 格式化分类数据供选择器使用
+  const categoryOptions = categories.map(category => ({
+    label: category.name,
+    value: category.id?.toString() || '',
+  }));
 
-    // In a real app, you would save the data to your backend or state management
-    console.log('Saving task:', formData);
-    Alert.alert('Success', 'Task saved successfully!');
-
-    // Navigate back to home screen
-    // router.back(); // Uncomment this when you're ready to navigate
-  };
-
-  // Update form data
-  const updateFormData = (key: keyof TaskFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
-  };
-
-  // Handle adding subtask
-  const handleAddSubtask = () => {
-    if (showSubtaskInput) {
-      if (newSubtask.trim()) {
-        updateFormData('subtasks', [...formData.subtasks, newSubtask]);
-        setNewSubtask('');
-      }
-      setShowSubtaskInput(false);
-    } else {
-      setShowSubtaskInput(true);
+  // 保存并返回上一页
+  const handleSave = async () => {
+    const result = await handleSubmit();
+    if (result) {
+      // 保存成功后返回
+      router.back();
     }
   };
 
-  // Handle removing subtask
-  const handleRemoveSubtask = (index: number) => {
-    const updatedSubtasks = [...formData.subtasks];
-    updatedSubtasks.splice(index, 1);
-    updateFormData('subtasks', updatedSubtasks);
+  // 取消并返回
+  const handleCancel = () => {
+    router.back();
   };
 
-  // Handle picking attachments
-  const handlePickAttachment = () => {
-    Alert.alert('Feature Coming Soon', 'Attachment functionality will be available in a future update.');
-  };
+  // 定义提醒选项
+  const REMINDERS = [
+    { label: '无', value: 'none' },
+    { label: '任务时间', value: 'at_time' },
+    { label: '提前5分钟', value: '5min' },
+    { label: '提前15分钟', value: '15min' },
+    { label: '提前30分钟', value: '30min' },
+    { label: '提前1小时', value: '1hour' },
+    { label: '提前1天', value: '1day' },
+  ];
 
   return (
     <View style={styles.container}>
@@ -176,19 +142,19 @@ export default function AddTaskScreen() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          {/* <HeaderBar title="Add Task" onSave={handleSave} /> */}
+          <HeaderBar title="添加任务" onSave={handleSave} />
 
-          {/* Task Form */}
+          {/* 任务表单 */}
           <FormInput
-            label="Task Title"
-            placeholder="Enter task title"
+            label="任务标题"
+            placeholder="请输入任务标题"
             value={formData.title}
             onChangeText={(text) => updateFormData('title', text)}
           />
 
           <FormInput
-            label="Description"
-            placeholder="Enter task description"
+            label="任务描述"
+            placeholder="请输入任务描述"
             value={formData.description}
             onChangeText={(text) => updateFormData('description', text)}
             multiline
@@ -198,24 +164,25 @@ export default function AddTaskScreen() {
           />
 
           <FormSelect
-            label="Category"
-            value={formData.category}
+            label="类别"
+            value={formData.category || ''}
             onValueChange={(value) => updateFormData('category', value)}
-            items={CATEGORIES}
+            items={categoryOptions}
+            isLoading={categoriesLoading}
           />
 
           <View style={styles.formGroup}>
             <View style={styles.row}>
               <DateTimePicker
-                label="Date"
+                label="日期"
                 mode="date"
                 value={formData.date}
                 onChange={(date) => updateFormData('date', date)}
               />
               <DateTimePicker
-                label="Time"
+                label="时间"
                 mode="time"
-                value={formData.time}
+                value={formData.time || new Date()}
                 onChange={(time) => updateFormData('time', time)}
               />
             </View>
@@ -227,13 +194,13 @@ export default function AddTaskScreen() {
           />
 
           <FormSelect
-            label="Reminder"
+            label="提醒"
             value={formData.reminder}
             onValueChange={(value) => updateFormData('reminder', value)}
             items={REMINDERS}
           />
 
-          <AttachmentPicker onPress={handlePickAttachment} />
+          <AttachmentPicker onPress={() => Alert.alert('即将推出', '附件功能将在未来版本中提供。')} />
 
           <View style={styles.formGroup}>
             <SubtaskList
@@ -247,7 +214,7 @@ export default function AddTaskScreen() {
                 style={styles.subtaskInput}
                 value={newSubtask}
                 onChangeText={setNewSubtask}
-                placeholder="Enter subtask"
+                placeholder="请输入子任务"
                 autoFocus
                 onBlur={() => {
                   if (!newSubtask.trim()) {
@@ -260,8 +227,14 @@ export default function AddTaskScreen() {
             )}
           </View>
 
-          <Button title="Save Task" onPress={handleSave} variant="primary" />
-          <Button title="Cancel" onPress={() => { }} variant="outline" />
+          <Button
+            title="保存任务"
+            onPress={handleSave}
+            variant="primary"
+            loading={loading}
+            disabled={!formData.title.trim()}
+          />
+          <Button title="取消" onPress={handleCancel} variant="outline" disabled={loading} />
         </ScrollView>
       </KeyboardAvoidingView>
     </View>
@@ -321,7 +294,7 @@ const styles = StyleSheet.create({
     borderColor: '#007AFF',
   },
   disabledButton: {
-    backgroundColor: isPrimary => isPrimary ? '#A5CFFF' : 'transparent',
+    backgroundColor: '#A5CFFF',
     borderColor: '#A5CFFF',
   },
   buttonText: {
@@ -335,6 +308,6 @@ const styles = StyleSheet.create({
     color: '#007AFF',
   },
   disabledButtonText: {
-    color: isPrimary => isPrimary ? '#FFFFFF' : '#A5CFFF',
+    color: '#FFFFFF',
   },
 }); 

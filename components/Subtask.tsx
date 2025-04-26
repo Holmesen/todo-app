@@ -1,48 +1,57 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
+import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 
-interface SubtaskItemProps {
-  title: string;
-  onRemove: () => void;
-}
-
-export function SubtaskItem({ title, onRemove }: SubtaskItemProps) {
-  return (
-    <View style={styles.subtaskItem}>
-      <Text style={styles.subtaskTitle}>{title}</Text>
-      <TouchableOpacity style={styles.removeButton} onPress={onRemove}>
-        <FontAwesome name="times" size={16} color="#FF3B30" />
-      </TouchableOpacity>
-    </View>
-  );
-}
-
+// 子任务列表属性接口
 interface SubtaskListProps {
   subtasks: string[];
   onRemoveSubtask: (index: number) => void;
   onAddSubtask: () => void;
 }
 
+// 子任务项组件
+function SubtaskItem({ title, onRemove }: { title: string; onRemove: () => void }) {
+  return (
+    <View style={styles.subtaskItem}>
+      <View style={styles.subtaskContent}>
+        <MaterialIcons name="check-box-outline-blank" size={20} color="#007AFF" />
+        <Text style={styles.subtaskText}>{title}</Text>
+      </View>
+      <TouchableOpacity onPress={onRemove} style={styles.removeButton}>
+        <MaterialIcons name="delete-outline" size={20} color="#FF3B30" />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// 子任务列表组件
 export function SubtaskList({ subtasks, onRemoveSubtask, onAddSubtask }: SubtaskListProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>Subtasks</Text>
-
-      <View style={styles.subtaskList}>
-        {subtasks.map((subtask, index) => (
-          <SubtaskItem
-            key={index}
-            title={subtask}
-            onRemove={() => onRemoveSubtask(index)}
-          />
-        ))}
+      <View style={styles.headerContainer}>
+        <Text style={styles.header}>子任务</Text>
+        <TouchableOpacity onPress={onAddSubtask} style={styles.addButton}>
+          <Ionicons name="add-circle-outline" size={20} color="#007AFF" />
+          <Text style={styles.addButtonText}>添加子任务</Text>
+        </TouchableOpacity>
       </View>
 
-      <TouchableOpacity style={styles.addSubtaskBtn} onPress={onAddSubtask}>
-        <FontAwesome name="plus-circle" size={16} color="#007AFF" style={styles.addSubtaskIcon} />
-        <Text style={styles.addSubtaskText}>Add Subtask</Text>
-      </TouchableOpacity>
+      {subtasks.length > 0 ? (
+        <FlatList
+          data={subtasks}
+          keyExtractor={(item, index) => `subtask-${index}`}
+          renderItem={({ item, index }) => (
+            <SubtaskItem
+              title={item}
+              onRemove={() => onRemoveSubtask(index)}
+            />
+          )}
+          style={styles.list}
+          scrollEnabled={false}
+        />
+      ) : (
+        <Text style={styles.emptyText}>没有子任务</Text>
+      )}
     </View>
   );
 }
@@ -51,44 +60,56 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 20,
   },
-  label: {
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  header: {
     fontSize: 15,
     fontWeight: '500',
     color: '#3A3A3C',
-    marginBottom: 8,
   },
-  subtaskList: {
-    marginTop: 12,
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  addButtonText: {
+    fontSize: 14,
+    color: '#007AFF',
+    marginLeft: 4,
+  },
+  list: {
+    marginTop: 4,
   },
   subtaskItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
-    backgroundColor: '#F2F2F7',
-    borderRadius: 8,
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F2F2F7',
   },
-  subtaskTitle: {
+  subtaskContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
+  },
+  subtaskText: {
     fontSize: 15,
+    color: '#000000',
+    marginLeft: 10,
+    flex: 1,
   },
   removeButton: {
     padding: 4,
   },
-  addSubtaskBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    backgroundColor: '#F2F2F7',
-    borderRadius: 8,
-    marginTop: 8,
-  },
-  addSubtaskIcon: {
-    marginRight: 8,
-  },
-  addSubtaskText: {
-    color: '#007AFF',
-    fontWeight: '600',
+  emptyText: {
+    fontSize: 14,
+    color: '#8E8E93',
+    fontStyle: 'italic',
+    marginTop: 4,
+    marginBottom: 8,
   },
 }); 

@@ -1,79 +1,85 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { FontAwesome } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
+// 页面头部栏属性接口
 interface HeaderBarProps {
   title: string;
+  showBackButton?: boolean;
+  onBack?: () => void;
   onSave?: () => void;
-  showSaveButton?: boolean;
 }
 
 export function HeaderBar({
   title,
+  showBackButton = true,
+  onBack,
   onSave,
-  showSaveButton = true
 }: HeaderBarProps) {
-  const router = useRouter();
-
+  // 处理返回操作
   const handleBack = () => {
-    router.back();
+    if (onBack) {
+      onBack();
+    } else {
+      router.back();
+    }
   };
 
   return (
-    <View style={styles.header}>
-      <TouchableOpacity style={styles.backButton} onPress={handleBack}>
-        <FontAwesome name="chevron-left" size={14} color="#007AFF" style={styles.backIcon} />
-        <Text style={styles.backText}>Cancel</Text>
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <View style={styles.leftContainer}>
+        {showBackButton && (
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+            <Ionicons name="chevron-back" size={24} color="#007AFF" />
+          </TouchableOpacity>
+        )}
+      </View>
 
       <Text style={styles.title}>{title}</Text>
 
-      {showSaveButton ? (
-        <TouchableOpacity style={styles.saveButton} onPress={onSave}>
-          <Text style={styles.saveText}>Save</Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.placeholder} />
-      )}
+      <View style={styles.rightContainer}>
+        {onSave && (
+          <TouchableOpacity onPress={onSave} style={styles.saveButton}>
+            <Text style={styles.saveButtonText}>保存</Text>
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    height: 44,
+  container: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingVertical: 16,
     marginBottom: 20,
-    paddingHorizontal: 8,
+  },
+  leftContainer: {
+    flex: 1,
+    alignItems: 'flex-start',
+  },
+  rightContainer: {
+    flex: 1,
+    alignItems: 'flex-end',
   },
   backButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  backIcon: {
-    marginRight: 4,
-  },
-  backText: {
-    color: '#007AFF',
-    fontSize: 17,
+    padding: 4,
   },
   title: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
+    color: '#000000',
     textAlign: 'center',
   },
   saveButton: {
-    paddingHorizontal: 8,
+    padding: 4,
   },
-  saveText: {
-    color: '#007AFF',
+  saveButtonText: {
     fontSize: 17,
+    color: '#007AFF',
     fontWeight: '600',
-  },
-  placeholder: {
-    width: 60, // Approximate width of the back button for balance
   },
 }); 

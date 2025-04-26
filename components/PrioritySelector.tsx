@@ -1,108 +1,79 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-type Priority = 'low' | 'medium' | 'high';
+// 任务优先级类型
+export type TaskPriority = 'low' | 'medium' | 'high';
 
+// 优先级选择器属性接口
 interface PrioritySelectorProps {
-  selectedPriority: Priority;
-  onSelectPriority: (priority: Priority) => void;
+  selectedPriority: TaskPriority;
+  onSelectPriority: (priority: TaskPriority) => void;
 }
 
 export function PrioritySelector({ selectedPriority, onSelectPriority }: PrioritySelectorProps) {
+  // 优先级选项
+  const priorities: { value: TaskPriority; label: string; color: string }[] = [
+    { value: 'low', label: '低', color: '#30C48D' },
+    { value: 'medium', label: '中', color: '#FF9500' },
+    { value: 'high', label: '高', color: '#FF2D55' },
+  ];
+
   return (
-    <View style={styles.formGroup}>
-      <Text style={styles.formLabel}>Priority</Text>
-      <View style={styles.priorityOptions}>
-        <TouchableOpacity
-          style={[
-            styles.priorityOption,
-            selectedPriority === 'low' && styles.selectedOption,
-          ]}
-          onPress={() => onSelectPriority('low')}
-        >
-          <Text
+    <View style={styles.container}>
+      <Text style={styles.label}>优先级</Text>
+      <View style={styles.buttonsContainer}>
+        {priorities.map((priority) => (
+          <TouchableOpacity
+            key={priority.value}
             style={[
-              styles.priorityText,
-              selectedPriority === 'low' && styles.selectedOptionText,
+              styles.priorityButton,
+              {
+                backgroundColor: selectedPriority === priority.value ? priority.color : 'transparent',
+                borderColor: priority.color
+              }
             ]}
+            onPress={() => onSelectPriority(priority.value)}
           >
-            Low
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.priorityOption,
-            selectedPriority === 'medium' && styles.selectedOption,
-          ]}
-          onPress={() => onSelectPriority('medium')}
-        >
-          <Text
-            style={[
-              styles.priorityText,
-              selectedPriority === 'medium' && styles.selectedOptionText,
-            ]}
-          >
-            Medium
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[
-            styles.priorityOption,
-            selectedPriority === 'high' && styles.selectedOption,
-          ]}
-          onPress={() => onSelectPriority('high')}
-        >
-          <Text
-            style={[
-              styles.priorityText,
-              selectedPriority === 'high' && styles.selectedOptionText,
-            ]}
-          >
-            High
-          </Text>
-        </TouchableOpacity>
+            <Text
+              style={[
+                styles.priorityText,
+                { color: selectedPriority === priority.value ? '#FFFFFF' : priority.color },
+              ]}
+            >
+              {priority.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  formGroup: {
+  container: {
     marginBottom: 20,
   },
-  formLabel: {
+  label: {
     fontSize: 15,
     fontWeight: '500',
     color: '#3A3A3C',
     marginBottom: 8,
   },
-  priorityOptions: {
+  buttonsContainer: {
     flexDirection: 'row',
-    gap: 10,
+    justifyContent: 'space-between',
   },
-  priorityOption: {
+  priorityButton: {
     flex: 1,
-    alignItems: 'center',
     paddingVertical: 12,
     borderRadius: 10,
-    fontWeight: '500',
-    fontSize: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: 4,
     borderWidth: 1,
-    borderColor: '#D1D1D6',
-    backgroundColor: '#F9F9F9',
   },
   priorityText: {
-    fontWeight: '500',
     fontSize: 15,
-    color: '#000000',
-  },
-  selectedOption: {
-    backgroundColor: '#F2F9FF',
-    borderColor: '#007AFF',
-  },
-  selectedOptionText: {
-    color: '#007AFF',
+    fontWeight: '600',
   },
 }); 

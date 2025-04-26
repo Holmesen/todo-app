@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, StyleSheet, TextInputProps } from 'react-native';
 
+// 表单输入框属性接口，继承自 TextInput 属性
 interface FormInputProps extends TextInputProps {
   label: string;
   error?: string;

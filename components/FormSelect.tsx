@@ -1,28 +1,36 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
-interface FormSelectProps {
+// 表单选择器属性接口
+export interface FormSelectProps {
   label: string;
   value: string;
   onValueChange: (value: string) => void;
   items: Array<{ label: string; value: string }>;
+  isLoading?: boolean;
 }
 
-export function FormSelect({ label, value, onValueChange, items }: FormSelectProps) {
+export function FormSelect({ label, value, onValueChange, items, isLoading = false }: FormSelectProps) {
   return (
     <View style={styles.formGroup}>
       <Text style={styles.formLabel}>{label}</Text>
       <View style={styles.pickerContainer}>
-        <Picker
-          selectedValue={value}
-          onValueChange={onValueChange}
-          style={styles.picker}
-        >
-          {items.map((item) => (
-            <Picker.Item key={item.value} label={item.label} value={item.value} />
-          ))}
-        </Picker>
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#007AFF" />
+          </View>
+        ) : (
+          <Picker
+            selectedValue={value}
+            onValueChange={onValueChange}
+            style={styles.picker}
+          >
+            {items.map((item) => (
+              <Picker.Item key={item.value} label={item.label} value={item.value} />
+            ))}
+          </Picker>
+        )}
       </View>
     </View>
   );
@@ -47,6 +55,11 @@ const styles = StyleSheet.create({
   },
   picker: {
     width: '100%',
-    height: 50, // Fixed height for better appearance
+    height: 50, // 固定高度以获得更好的外观
+  },
+  loadingContainer: {
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 }); 
