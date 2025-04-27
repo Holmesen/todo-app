@@ -8,14 +8,18 @@ import {
   Alert,
   Image,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
+import { supabase } from '@/lib/supabase';
 
 // Import taskService and types
 import { taskService, TaskWithRelations, Subtask } from '@/services/taskService';
+// Import TaskEditForm component
+import TaskEditForm from '@/components/TaskEditForm';
 
 // Define the Priority type
 type Priority = 'high' | 'medium' | 'low';
@@ -28,6 +32,8 @@ export default function TaskDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (!taskId) return;
@@ -57,7 +63,7 @@ export default function TaskDetailScreen() {
   }
 
   // Function to toggle subtask completion
-  const toggleSubtaskCompletion = async (subtaskId: string) => {
+  const toggleSubtaskCompletion = async (subtaskId: number) => {
     if (!task) return;
 
     try {
@@ -84,6 +90,94 @@ export default function TaskDetailScreen() {
       Alert.alert('Error', 'Failed to update subtask');
       // Revert the optimistic update
       if (taskId) fetchTaskDetails(taskId.toString());
+    }
+  };
+
+  // Function to save task edits
+  const saveTaskEdits = async (updatedTask: Partial<TaskWithRelations>) => {
+    if (!task) return;
+
+    setIsSaving(true);
+    try {
+      // First, update the task basic information
+      const baseUpdateData = {
+        id: updatedTask.id!,
+        title: updatedTask.title!,
+        description: updatedTask.description,
+        priority: updatedTask.priority!,
+        date: updatedTask.date!,
+        time: updatedTask.time || null,
+      };
+
+      // Update task in Supabase
+      await taskService.updateTask(baseUpdateData);
+
+      // Handle subtasks updates
+      if (updatedTask.subtasks) {
+        // 分离子任务为已有的和新增的
+        const existingSubtasks = updatedTask.subtasks.filter(st => st.id !== null);
+        const newSubtasks = updatedTask.subtasks.filter(st => st.id === null);
+
+        // 获取数据库中当前的子任务
+        const { data: currentSubtasks } = await supabase
+          .from('todo_subtasks')
+          .select('id')
+          .eq('task_id', task.id);
+
+        const currentSubtaskIds = Array.from(new Set(currentSubtasks?.map(st => st.id) || []));
+        const updatedSubtaskIds = Array.from(new Set(existingSubtasks.map(st => st.id)));
+
+        console.log('currentSubtaskIds: ', currentSubtaskIds);
+        console.log('updatedSubtaskIds: ', updatedSubtaskIds);
+
+        // 找出要删除的子任务（在当前数据库中但不在更新列表中）
+        const subtasksIdsToDelete = currentSubtaskIds.filter(
+          id => !updatedSubtaskIds.includes(id)
+        ) || [];
+
+        console.log('subtasksIdsToDelete: ', subtasksIdsToDelete);
+
+        // 删除子任务
+        for (const subtaskId of subtasksIdsToDelete) {
+          console.log('subtaskId: ', subtaskId);
+          await supabase
+            .from('todo_subtasks')
+            .delete()
+            .eq('id', subtaskId);
+        }
+
+        // 更新现有子任务
+        for (const subtask of existingSubtasks) {
+          await supabase
+            .from('todo_subtasks')
+            .update({
+              title: subtask.title,
+              is_completed: subtask.completed,
+            })
+            .eq('id', subtask.id);
+        }
+
+        // 添加新子任务
+        if (newSubtasks.length > 0) {
+          const newSubtasksData = newSubtasks.map(st => ({
+            task_id: task.id,
+            title: st.title,
+            is_completed: st.completed,
+          }));
+
+          await supabase.from('todo_subtasks').insert(newSubtasksData);
+        }
+      }
+
+      // Refresh task data
+      fetchTaskDetails(task.id);
+      setShowEditModal(false);
+      Alert.alert('Success', 'Task updated successfully');
+    } catch (err) {
+      console.error('Error updating task:', err);
+      Alert.alert('Error', 'Failed to update task');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -123,10 +217,9 @@ export default function TaskDetailScreen() {
 
   // Function to edit task
   const editTask = () => {
-    router.push({
-      pathname: '/add-task',
-      params: { id: taskId }
-    });
+    if (task) {
+      setShowEditModal(true);
+    }
   };
 
   // Function to delete task
@@ -327,7 +420,7 @@ export default function TaskDetailScreen() {
                   <TouchableOpacity
                     key={subtask.id}
                     style={styles.subtaskItem}
-                    onPress={() => toggleSubtaskCompletion(subtask.id)}
+                    onPress={() => toggleSubtaskCompletion(subtask.id!)}
                   >
                     <View
                       style={[
@@ -408,6 +501,35 @@ export default function TaskDetailScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* Edit Task Modal */}
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={showEditModal}
+        onRequestClose={() => setShowEditModal(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Edit Task</Text>
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowEditModal(false)}
+              disabled={isSaving}
+            >
+              <FontAwesome name="times" size={20} color="#3A3A3C" />
+            </TouchableOpacity>
+          </View>
+          {task && (
+            <TaskEditForm
+              task={task}
+              onSave={saveTaskEdits}
+              onCancel={() => setShowEditModal(false)}
+              isSaving={isSaving}
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -630,5 +752,26 @@ const styles = StyleSheet.create({
   },
   disabledButton: {
     opacity: 0.5,
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E5EA',
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  modalCloseButton: {
+    padding: 5,
   },
 });

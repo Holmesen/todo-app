@@ -33,8 +33,8 @@ const defaultFormData: AddTaskFormData = {
 
 // 从UI提醒值映射到数据库提醒类型
 const reminderTypeMap: Record<string, ReminderType> = {
-  'none': 'none',
-  'at_time': 'at_time',
+  none: 'none',
+  at_time: 'at_time',
   '5min': '5_min_before',
   '15min': '15_min_before',
   '30min': '30_min_before',
@@ -79,9 +79,9 @@ export function useAddTaskForm() {
 
         // 如果有可用分类，设置默认分类
         if (data.length > 0 && !formData.category) {
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
-            category: data[0].id?.toString() || null
+            category: data[0].id?.toString() || null,
           }));
         }
       }
@@ -95,7 +95,7 @@ export function useAddTaskForm() {
 
   // 更新表单数据
   const updateFormData = (key: keyof AddTaskFormData, value: any) => {
-    setFormData(prev => ({ ...prev, [key]: value }));
+    setFormData((prev) => ({ ...prev, [key]: value }));
   };
 
   // 处理添加子任务
@@ -142,14 +142,18 @@ export function useAddTaskForm() {
       // 格式化日期和时间
       const dueDate = format(formData.date, 'yyyy-MM-dd');
       const dueTime = formData.time ? format(formData.time, 'HH:mm:ss') : null;
+      console.log('dueDate: ', dueDate);
+      console.log('dueTime: ', dueTime);
 
       // 转换提醒类型
       const reminderType = reminderTypeMap[formData.reminder] || 'none';
 
       // 如果需要，计算提醒时间
-      const reminderTime = formData.reminder !== 'none' && dueDate
-        ? taskService.calculateReminderTime(dueDate, dueTime, reminderType)
-        : null;
+      const reminderTime =
+        formData.reminder !== 'none' && dueDate
+          ? taskService.calculateReminderTime(dueDate, dueTime, reminderType)
+          : null;
+      console.log('reminderTime: ', reminderTime);
 
       // 创建任务输入
       const taskInput = {
@@ -165,17 +169,18 @@ export function useAddTaskForm() {
           reminder_time: reminderTime,
           completed_at: null,
         },
-        subtasks: formData.subtasks.map(title => ({
+        subtasks: formData.subtasks.map((title) => ({
           title,
           is_completed: false,
         })),
-        reminder: reminderType !== 'none' && reminderTime
-          ? {
-            reminder_type: reminderType,
-            reminder_time: reminderTime,
-            is_sent: false,
-          }
-          : undefined,
+        reminder:
+          reminderType !== 'none' && reminderTime
+            ? {
+                reminder_type: reminderType,
+                reminder_time: reminderTime,
+                is_sent: false,
+              }
+            : undefined,
       };
 
       // 保存任务到Supabase
@@ -187,7 +192,6 @@ export function useAddTaskForm() {
       Alert.alert('成功', '任务创建成功！');
       resetForm();
       return data;
-
     } catch (error) {
       console.error('创建任务出错:', error);
       Alert.alert('错误', (error as Error).message || '创建任务失败');
@@ -213,4 +217,4 @@ export function useAddTaskForm() {
     categoriesLoading,
     fetchCategories,
   };
-} 
+}

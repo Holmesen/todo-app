@@ -108,7 +108,7 @@ export interface TaskResult {
 
 // Subtask schema for the app layer
 export const SubtaskSchema = z.object({
-  id: z.union([z.number(), z.string()]).transform((n) => n.toString()),
+  id: z.union([z.number(), z.null()]).transform((n) => n ?? null),
   title: z.string(),
   completed: z.union([
     z.boolean(),
@@ -192,7 +192,7 @@ function transformDbTaskToAppTask(dbTask: DbTask): Task {
 // Transform DB Subtask to App Subtask
 function transformDbSubtaskToAppSubtask(dbSubtask: DbSubtask): Subtask {
   return {
-    id: dbSubtask.id.toString(),
+    id: dbSubtask.id,
     title: dbSubtask.title,
     completed: dbSubtask.is_completed,
     task_id: dbSubtask.task_id.toString(),
@@ -203,10 +203,10 @@ class TaskService {
   calculateReminderTime(dueDate: string, dueTime: string | null, reminderType: string) {
     if (reminderType === 'none') return null;
     if (reminderType === 'at_time') return formatISO(startOfDay(parseISO(dueDate)));
-    if (reminderType === '5_min_before') return formatISO(subtractMinutes(dueTime, 5));
-    if (reminderType === '15_min_before') return formatISO(subtractMinutes(dueTime, 15));
-    if (reminderType === '30_min_before') return formatISO(subtractMinutes(dueTime, 30));
-    if (reminderType === '1_hour_before') return formatISO(subtractHours(dueTime, 1));
+    if (reminderType === '5_min_before') return formatISO(subtractMinutes(dueDate, dueTime, 5));
+    if (reminderType === '15_min_before') return formatISO(subtractMinutes(dueDate, dueTime, 15));
+    if (reminderType === '30_min_before') return formatISO(subtractMinutes(dueDate, dueTime, 30));
+    if (reminderType === '1_hour_before') return formatISO(subtractHours(dueDate, dueTime, 1));
     if (reminderType === '1_day_before') return formatISO(subtractDays(dueDate, 1));
     return null;
   }
@@ -506,14 +506,14 @@ class TaskService {
         updated_at: new Date(taskData.updated_at),
         subtasks:
           subtasksData?.map((subtask) => ({
-            id: subtask.id.toString(),
+            id: subtask.id,
             title: subtask.title,
             completed: subtask.is_completed,
             task_id: subtask.task_id.toString(),
           })) || [],
         attachments:
           attachmentsData?.map((attachment) => ({
-            id: attachment.id.toString(),
+            id: attachment.id,
             uri: attachment.file_url,
             type: attachment.file_type || 'unknown',
             task_id: attachment.task_id.toString(),
@@ -599,7 +599,7 @@ class TaskService {
    * @param completed New completion status
    * @returns Updated subtask
    */
-  async toggleSubtaskCompletion(subtaskId: string, completed: boolean): Promise<Subtask> {
+  async toggleSubtaskCompletion(subtaskId: number, completed: boolean): Promise<Subtask> {
     try {
       const { data, error } = await supabase
         .from('todo_subtasks')
@@ -629,22 +629,22 @@ class TaskService {
 
 export const taskService = new TaskService();
 
-function subtractMinutes(dueTime: string | null, minutes: number): string | number | Date {
+function subtractMinutes(dueDate: string, dueTime: string | null, minutes: number): string | number | Date {
   if (!dueTime) {
     return '';
   }
 
-  const date = new Date(dueTime);
+  const date = new Date(`${dueDate} ${dueTime}`);
   date.setMinutes(date.getMinutes() - minutes);
   return date;
 }
 
-function subtractHours(dueTime: string | null, hours: number): string | number | Date {
+function subtractHours(dueDate: string, dueTime: string | null, hours: number): string | number | Date {
   if (!dueTime) {
     return '';
   }
 
-  const date = new Date(dueTime);
+  const date = new Date(`${dueDate} ${dueTime}`);
   date.setHours(date.getHours() - hours);
   return date;
 }
