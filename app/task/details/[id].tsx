@@ -127,15 +127,10 @@ export default function TaskDetailScreen() {
         const currentSubtaskIds = Array.from(new Set(currentSubtasks?.map(st => st.id) || []));
         const updatedSubtaskIds = Array.from(new Set(existingSubtasks.map(st => st.id)));
 
-        console.log('currentSubtaskIds: ', currentSubtaskIds);
-        console.log('updatedSubtaskIds: ', updatedSubtaskIds);
-
         // 找出要删除的子任务（在当前数据库中但不在更新列表中）
         const subtasksIdsToDelete = currentSubtaskIds.filter(
           id => !updatedSubtaskIds.includes(id)
         ) || [];
-
-        console.log('subtasksIdsToDelete: ', subtasksIdsToDelete);
 
         // 删除子任务
         for (const subtaskId of subtasksIdsToDelete) {

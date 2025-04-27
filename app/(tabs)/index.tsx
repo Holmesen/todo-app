@@ -8,6 +8,7 @@ import {
   Platform,
   Alert,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -33,6 +34,7 @@ const DEFAULT_QUICK_ACTIONS = [
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   // Use our tasks hook to fetch data from Supabase
   const {
@@ -50,11 +52,27 @@ export default function HomeScreen() {
     featuredCategories,
     isLoading: isCategoriesLoading,
     error: categoriesError,
+    refetch: refetchCategories,
   } = useCategories();
 
   // Combined loading and error states
   const isLoading = isTasksLoading || isCategoriesLoading;
   const error = tasksError || categoriesError;
+
+  // Handle pull-to-refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await Promise.all([
+        refetchTasks(),
+        refetchCategories(),
+      ]);
+    } catch (err) {
+      console.error('Refresh error:', err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Combine default quick actions with featured categories
   const quickActionButtons = useMemo(() => {
@@ -91,6 +109,14 @@ export default function HomeScreen() {
           paddingBottom: 20,
         }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#007AFF']} // Android
+            tintColor="#007AFF" // iOS
+          />
+        }
       >
         <Text style={styles.header}>今天</Text>
 
