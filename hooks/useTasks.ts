@@ -10,6 +10,7 @@ interface UseTasksReturn {
   upcomingTasks: Task[];
   completedTasks: Task[];
   filteredTasks: Task[];
+  allTasks: Task[];
   isLoading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -189,12 +190,15 @@ export function useTasks(): UseTasksReturn {
 
   const completedTasks = tasks.filter((task) => task.completed);
 
+  const allTasks = tasks.filter((task) => !task.completed);
+
   return {
     tasks,
     todayTasks,
     upcomingTasks,
     completedTasks,
     filteredTasks,
+    allTasks,
     isLoading,
     error,
     refetch: fetchTasks,

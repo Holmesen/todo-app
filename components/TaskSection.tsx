@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface TaskSectionProps {
   title: string;
-  onSeeAll: () => void;
+  onSeeAll?: () => void;
   children: React.ReactNode;
 }
 

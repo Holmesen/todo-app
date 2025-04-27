@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -35,12 +35,15 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Use our tasks hook to fetch data from Supabase
   const {
     todayTasks,
     upcomingTasks,
     filteredTasks,
+    allTasks,
     isLoading: isTasksLoading,
     error: tasksError,
     refetch: refetchTasks,
@@ -86,6 +89,27 @@ export default function HomeScreen() {
     return [...DEFAULT_QUICK_ACTIONS, ...categoryButtons];
   }, [featuredCategories]);
 
+  // Handle search functionality
+  useEffect(() => {
+    // If search query is empty, we're not searching
+    if (!searchQuery.trim()) {
+      setIsSearching(false);
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+
+    // Filter all tasks based on the search query
+    const query = searchQuery.toLowerCase().trim();
+    const filtered = allTasks.filter(task =>
+      task.title.toLowerCase().includes(query) ||
+      (task.description && task.description.toLowerCase().includes(query))
+    );
+
+    setSearchResults(filtered);
+  }, [searchQuery]);
+
   const handleTaskPress = (taskId: string) => {
     // Navigate to the task detail screen
     // We're using string format to avoid the pathname type checking issues
@@ -121,26 +145,32 @@ export default function HomeScreen() {
         <Text style={styles.header}>今天</Text>
 
         {/* Search Bar */}
-        <SearchBar value={searchQuery} onChangeText={setSearchQuery} />
+        <SearchBar
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="搜索任务..."
+        />
 
-        {/* Quick Action Buttons */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.actionButtonsContainer}
-          contentContainerStyle={styles.actionButtons}
-        >
-          {quickActionButtons.map((button) => (
-            <ActionButton
-              key={button.id}
-              label={button.label}
-              color={button.color}
-              icon={button.icon}
-              isActive={button.id === 'all' ? filteredTasks === todayTasks : false}
-              onPress={() => setActiveFilter(button.id)}
-            />
-          ))}
-        </ScrollView>
+        {/* Quick Action Buttons - Hide when searching */}
+        {!isSearching && (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.actionButtonsContainer}
+            contentContainerStyle={styles.actionButtons}
+          >
+            {quickActionButtons.map((button) => (
+              <ActionButton
+                key={button.id}
+                label={button.label}
+                color={button.color}
+                icon={button.icon}
+                isActive={button.id === 'all' ? filteredTasks === todayTasks : false}
+                onPress={() => setActiveFilter(button.id)}
+              />
+            ))}
+          </ScrollView>
+        )}
 
         {/* Error State */}
         {error && (
@@ -158,8 +188,31 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Today's Tasks Section */}
-        {!isLoading && !error && (
+        {/* Search Results */}
+        {isSearching && !isLoading && !error && (
+          <TaskSection
+            title="搜索结果"
+            onSeeAll={searchResults.length > 0 ? () => { Alert.alert('查看全部', '查看所有匹配的任务'); } : undefined}
+          >
+            {searchResults.length === 0 ? (
+              <Text style={styles.emptyStateText}>没有找到匹配的任务</Text>
+            ) : (
+              searchResults.map((task) => (
+                <TaskItem
+                  key={task.id?.toString()}
+                  id={task.id?.toString() || ''}
+                  title={task.title}
+                  priority={task.priority}
+                  time={taskService.formatTaskTime(task)}
+                  onPress={handleTaskPress}
+                />
+              ))
+            )}
+          </TaskSection>
+        )}
+
+        {/* Today's Tasks Section - Hide when searching */}
+        {!isSearching && !isLoading && !error && (
           <TaskSection
             title="今天的任务"
             onSeeAll={() => handleSeeAllPress('today')}
@@ -181,8 +234,8 @@ export default function HomeScreen() {
           </TaskSection>
         )}
 
-        {/* Upcoming Tasks Section */}
-        {!isLoading && !error && (
+        {/* Upcoming Tasks Section - Hide when searching */}
+        {!isSearching && !isLoading && !error && (
           <TaskSection
             title="即将到来"
             onSeeAll={() => handleSeeAllPress('upcoming')}
