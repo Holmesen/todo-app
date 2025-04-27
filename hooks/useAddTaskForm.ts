@@ -52,16 +52,12 @@ export function useAddTaskForm() {
   const [showSubtaskInput, setShowSubtaskInput] = useState(false);
 
   // 从认证存储中获取用户
-  const { nativeUser, user, authMethod } = useAuthStore();
+  const { user } = useAuthStore();
 
   // 根据认证方式获取用户ID
   const getUserId = (): number => {
-    if (authMethod === 'native' && nativeUser) {
-      return nativeUser.id;
-    } else if (authMethod === 'supabase' && user) {
-      // 对于Supabase认证，我们需要从profiles表中获取user_id
-      // 这是一个简化 - 您可能需要根据实际的数据库结构进行调整
-      return parseInt(user.id);
+    if (user) {
+      return user.id;
     }
     throw new Error('用户未认证');
   };
@@ -142,8 +138,6 @@ export function useAddTaskForm() {
       // 格式化日期和时间
       const dueDate = format(formData.date, 'yyyy-MM-dd');
       const dueTime = formData.time ? format(formData.time, 'HH:mm:ss') : null;
-      console.log('dueDate: ', dueDate);
-      console.log('dueTime: ', dueTime);
 
       // 转换提醒类型
       const reminderType = reminderTypeMap[formData.reminder] || 'none';
@@ -153,7 +147,6 @@ export function useAddTaskForm() {
         formData.reminder !== 'none' && dueDate
           ? taskService.calculateReminderTime(dueDate, dueTime, reminderType)
           : null;
-      console.log('reminderTime: ', reminderTime);
 
       // 创建任务输入
       const taskInput = {

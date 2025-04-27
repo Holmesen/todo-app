@@ -458,7 +458,7 @@ class TaskService {
    * @param taskId Task ID
    * @returns Task with relations or null
    */
-  async getTaskById(taskId: string): Promise<TaskWithRelations | null> {
+  async getTaskById(taskId: string | number): Promise<TaskWithRelations | null> {
     try {
       // Fetch the task
       const { data: taskData, error: taskError } = await supabase

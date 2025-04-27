@@ -1,12 +1,13 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 
-export default function AuthLayout() {
+export default function ScreensLayout() {
   return (
     <Stack
       screenOptions={{
         headerShown: false,
         contentStyle: { backgroundColor: 'white' },
+        animation: 'slide_from_right',
       }}
     />
   );

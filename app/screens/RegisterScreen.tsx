@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   ScrollView,
   ActivityIndicator,
@@ -13,11 +12,12 @@ import {
   KeyboardAvoidingView,
   Platform
 } from 'react-native';
-import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 
 const RegisterScreen = () => {
+  const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -27,22 +27,22 @@ const RegisterScreen = () => {
   // 从认证存储中获取状态和方法
   const { signUp, isLoading, error } = useAuthStore();
 
-  // 处理注册错误或成功消息
+  // 处理注册错误
   useEffect(() => {
     if (error) {
-      if (error.includes('成功')) {
-        // 如果是成功消息（例如需要确认邮件的消息）
-        Alert.alert('注册成功', error, [
-          { text: '确定', onPress: () => router.replace('/screens/LoginScreen') }
-        ]);
-      } else {
-        // 如果是错误消息
-        Alert.alert('注册失败', error);
+      // 显示具体错误信息
+      let errorMessage = error;
+      if (error.includes('创建用户设置失败')) {
+        errorMessage = '注册过程中创建用户设置失败，请稍后重试。';
+      } else if (error.includes('该邮箱已被注册')) {
+        errorMessage = '该邮箱已被注册，请使用其他邮箱或直接登录。';
       }
+      Alert.alert('注册失败', errorMessage);
     }
-  }, [error, router]);
+  }, [error]);
 
   const isRegisterEnabled =
+    username.length > 0 &&
     fullName.length > 0 &&
     email.length > 0 &&
     password.length >= 8 &&
@@ -61,8 +61,18 @@ const RegisterScreen = () => {
       return;
     }
 
-    // 调用注册方法
-    await signUp(email, password, fullName);
+    try {
+      // 调用注册方法
+      await signUp(username, email, password, fullName);
+
+      // 如果注册成功，显示成功信息
+      if (!error) {
+        Alert.alert('注册成功', '您的账户已创建成功！');
+      }
+    } catch (e) {
+      // 这里不需要处理错误，因为错误已经存储在 authStore 的 error 状态中，
+      // 会由上面的 useEffect 处理
+    }
   };
 
   const navigateToLogin = () => {
@@ -70,7 +80,7 @@ const RegisterScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
       <KeyboardAvoidingView
@@ -82,10 +92,10 @@ const RegisterScreen = () => {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          {/* Navigation Header */}
+          {/* 顶部导航 */}
           <View style={styles.navHeader}>
             <TouchableOpacity style={styles.backButton} onPress={navigateToLogin} disabled={isLoading}>
-              <Ionicons name="chevron-back" size={20} color="#007AFF" />
+              <Ionicons name="chevron-back" size={20} color="#007aff" />
               <Text style={styles.backButtonText}>返回</Text>
             </TouchableOpacity>
             <Text style={styles.pageTitle}>注册账号</Text>
@@ -95,14 +105,25 @@ const RegisterScreen = () => {
           {/* Logo and App Name */}
           <View style={styles.logoArea}>
             <View style={styles.appLogo}>
-              <Ionicons name="checkmark-circle" size={48} color="white" />
+              <Ionicons name="person-add" size={48} color="white" />
             </View>
             <Text style={styles.appName}>TodoList</Text>
-            <Text style={styles.appSlogan}>加入我们，提高您的工作效率</Text>
+            <Text style={styles.appSlogan}>创建新账号</Text>
           </View>
 
           {/* Registration Form */}
           <View style={styles.form}>
+            <Text style={styles.formLabel}>用户名</Text>
+            <TextInput
+              style={styles.formInput}
+              placeholder="请输入用户名"
+              placeholderTextColor="#a0a0a0"
+              value={username}
+              onChangeText={setUsername}
+              autoCapitalize="none"
+              editable={!isLoading}
+            />
+
             <Text style={styles.formLabel}>全名</Text>
             <TextInput
               style={styles.formInput}
@@ -167,24 +188,6 @@ const RegisterScreen = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Social Registration Divider */}
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>或通过以下方式注册</Text>
-            <View style={styles.dividerLine} />
-          </View>
-
-          {/* Social Registration Buttons */}
-          <TouchableOpacity style={styles.socialBtn} disabled={isLoading}>
-            <FontAwesome name="apple" size={20} color="black" style={styles.socialIcon} />
-            <Text style={styles.socialBtnText}>使用 Apple 注册</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.socialBtn} disabled={isLoading}>
-            <FontAwesome name="google" size={20} color="#DB4437" style={styles.socialIcon} />
-            <Text style={styles.socialBtnText}>使用 Google 注册</Text>
-          </TouchableOpacity>
-
           {/* Login Prompt */}
           <TouchableOpacity
             style={styles.loginPrompt}
@@ -197,7 +200,7 @@ const RegisterScreen = () => {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -222,7 +225,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   backButtonText: {
-    color: '#007AFF',
+    color: '#007aff',
     fontSize: 17,
   },
   pageTitle: {
@@ -232,13 +235,13 @@ const styles = StyleSheet.create({
   logoArea: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 20,
+    marginBottom: 20,
   },
   appLogo: {
     width: 80,
     height: 80,
     borderRadius: 16,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007aff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -246,7 +249,7 @@ const styles = StyleSheet.create({
   appName: {
     fontWeight: '700',
     fontSize: 28,
-    color: '#007AFF',
+    color: '#007aff',
   },
   appSlogan: {
     fontSize: 15,
@@ -280,12 +283,12 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   termsLink: {
-    color: '#007AFF',
+    color: '#007aff',
   },
   primaryBtn: {
     width: '100%',
     padding: 16,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007aff',
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 4,
@@ -298,40 +301,6 @@ const styles = StyleSheet.create({
   disabledBtn: {
     backgroundColor: '#B0B0B0',
   },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E5E5EA',
-  },
-  dividerText: {
-    paddingHorizontal: 16,
-    color: '#8E8E93',
-    fontSize: 14,
-  },
-  socialBtn: {
-    width: '100%',
-    flexDirection: 'row',
-    padding: 14,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#D1D1D6',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  socialIcon: {
-    marginRight: 10,
-  },
-  socialBtnText: {
-    fontWeight: '500',
-    fontSize: 16,
-  },
   loginPrompt: {
     alignItems: 'center',
     padding: 20,
@@ -342,7 +311,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   loginLink: {
-    color: '#007AFF',
+    color: '#007aff',
     fontWeight: '600',
   },
 });

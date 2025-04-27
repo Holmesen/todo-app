@@ -14,7 +14,7 @@ export function PrioritySelector({ selectedPriority, onSelectPriority }: Priorit
   // 优先级选项
   const priorities: { value: TaskPriority; label: string; color: string }[] = [
     { value: 'low', label: '低', color: '#30C48D' },
-    { value: 'medium', label: '中', color: '#FF9500' },
+    { value: 'medium', label: '中', color: '#007aff' },
     { value: 'high', label: '高', color: '#FF2D55' },
   ];
 

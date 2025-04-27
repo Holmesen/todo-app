@@ -29,7 +29,7 @@ class CategoryService {
    * @param userId 用户ID
    * @returns 分类数据及任何可能的错误
    */
-  async getCategories(userId: number): Promise<CategoryResult> {
+  async getCategories(userId: number | string): Promise<CategoryResult> {
     const { data, error } = await supabase
       .from('todo_categories')
       .select('*')
@@ -37,8 +37,8 @@ class CategoryService {
       .order('name', { ascending: true });
 
     return {
-      data: data as Category[] || null,
-      error
+      data: (data as Category[]) || null,
+      error,
     };
   }
 
@@ -47,7 +47,7 @@ class CategoryService {
    * @param userId 用户ID
    * @returns 精选分类数据及任何可能的错误
    */
-  async getFeaturedCategories(userId: number): Promise<CategoryResult> {
+  async getFeaturedCategories(userId: number | string): Promise<CategoryResult> {
     const { data, error } = await supabase
       .from('todo_categories')
       .select('*')
@@ -56,8 +56,8 @@ class CategoryService {
       .order('name', { ascending: true });
 
     return {
-      data: data as Category[] || null,
-      error
+      data: (data as Category[]) || null,
+      error,
     };
   }
 
@@ -67,28 +67,22 @@ class CategoryService {
    * @returns 分类数据及任何可能的错误
    */
   async getCategoryById(categoryId: number): Promise<{ data: Category | null; error: PostgrestError | null }> {
-    const { data, error } = await supabase
-      .from('todo_categories')
-      .select('*')
-      .eq('id', categoryId)
-      .single();
+    const { data, error } = await supabase.from('todo_categories').select('*').eq('id', categoryId).single();
 
     return {
-      data: data as Category || null,
-      error
+      data: (data as Category) || null,
+      error,
     };
   }
 
   /**
    * 创建新分类
    */
-  async createCategory(category: Omit<Category, 'id' | 'created_at' | 'updated_at'>): Promise<ServiceResponse<Category>> {
+  async createCategory(
+    category: Omit<Category, 'id' | 'created_at' | 'updated_at'>
+  ): Promise<ServiceResponse<Category>> {
     try {
-      const { data, error } = await supabase
-        .from('todo_categories')
-        .insert(category)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('todo_categories').insert(category).select().single();
 
       if (error) throw error;
 
@@ -97,7 +91,7 @@ class CategoryService {
       console.error('Error creating category:', error);
       return {
         data: null,
-        error: error instanceof Error ? error : new Error('Unknown error occurred')
+        error: error instanceof Error ? error : new Error('Unknown error occurred'),
       };
     }
   }
@@ -105,14 +99,12 @@ class CategoryService {
   /**
    * 更新分类
    */
-  async updateCategory(id: number, category: Partial<Omit<Category, 'id' | 'user_id' | 'created_at' | 'updated_at'>>): Promise<ServiceResponse<Category>> {
+  async updateCategory(
+    id: number,
+    category: Partial<Omit<Category, 'id' | 'user_id' | 'created_at' | 'updated_at'>>
+  ): Promise<ServiceResponse<Category>> {
     try {
-      const { data, error } = await supabase
-        .from('todo_categories')
-        .update(category)
-        .eq('id', id)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('todo_categories').update(category).eq('id', id).select().single();
 
       if (error) throw error;
 
@@ -121,7 +113,7 @@ class CategoryService {
       console.error('Error updating category:', error);
       return {
         data: null,
-        error: error instanceof Error ? error : new Error('Unknown error occurred')
+        error: error instanceof Error ? error : new Error('Unknown error occurred'),
       };
     }
   }
@@ -131,10 +123,7 @@ class CategoryService {
    */
   async deleteCategory(id: number): Promise<ServiceResponse<null>> {
     try {
-      const { error } = await supabase
-        .from('todo_categories')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.from('todo_categories').delete().eq('id', id);
 
       if (error) throw error;
 
@@ -143,10 +132,10 @@ class CategoryService {
       console.error('Error deleting category:', error);
       return {
         data: null,
-        error: error instanceof Error ? error : new Error('Unknown error occurred')
+        error: error instanceof Error ? error : new Error('Unknown error occurred'),
       };
     }
   }
 }
 
-export const categoryService = new CategoryService(); 
+export const categoryService = new CategoryService();

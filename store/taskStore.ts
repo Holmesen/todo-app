@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { taskService, Task, Subtask, TaskPriority, TaskStatus } from '../services/taskService';
+import { taskService, Task, Subtask, TaskPriority, TaskStatus, CreateTaskInput } from '../services/taskService';
 import { Category, categoryService } from '../services/categoryService';
 import { useAuthStore } from './authStore';
 
@@ -44,20 +44,14 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       set({ isLoading: true, error: null });
 
       // Get user ID from auth store
-      const { nativeUser, user, authMethod } = useAuthStore.getState();
+      const { user } = useAuthStore.getState();
 
-      // Determine user ID based on auth method
-      let userId: number;
-      if (authMethod === 'native' && nativeUser) {
-        userId = nativeUser.id;
-      } else if (authMethod === 'supabase' && user) {
-        userId = parseInt(user.id);
-      } else {
+      if (!user?.id) {
         throw new Error('User not authenticated');
       }
 
       // Fetch tasks from service
-      const { data, error } = await taskService.getUserTasks(userId);
+      const { data, error } = await taskService.getUserTasks(String(user.id));
 
       if (error) throw error;
 
@@ -66,7 +60,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       console.error('Error fetching tasks:', error);
       set({
         error: (error as Error).message || 'Failed to fetch tasks',
-        isLoading: false
+        isLoading: false,
       });
     }
   },
@@ -77,20 +71,16 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       set({ categoriesLoading: true, error: null });
 
       // Get user ID from auth store
-      const { nativeUser, user, authMethod } = useAuthStore.getState();
+      const { user } = useAuthStore.getState();
 
       // Determine user ID based on auth method
       let userId: number;
-      if (authMethod === 'native' && nativeUser) {
-        userId = nativeUser.id;
-      } else if (authMethod === 'supabase' && user) {
-        userId = parseInt(user.id);
-      } else {
+      if (!user?.id) {
         throw new Error('User not authenticated');
       }
 
       // Fetch categories from service
-      const { data, error } = await categoryService.getUserCategories(userId);
+      const { data, error } = await categoryService.getCategories(String(user.id));
 
       if (error) throw error;
 
@@ -99,7 +89,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       console.error('Error fetching categories:', error);
       set({
         error: (error as Error).message || 'Failed to fetch categories',
-        categoriesLoading: false
+        categoriesLoading: false,
       });
     }
   },
@@ -110,16 +100,14 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       set({ isLoading: true, error: null });
 
       // Fetch task with subtasks
-      const { data, error } = await taskService.getTaskById(taskId);
+      const data = await taskService.getTaskById(taskId);
 
-      if (error) throw error;
-
-      set({ selectedTask: data || null, isLoading: false });
+      set({ selectedTask: (data as TaskState['selectedTask']) || null, isLoading: false });
     } catch (error) {
       console.error('Error fetching task:', error);
       set({
         error: (error as Error).message || 'Failed to fetch task details',
-        isLoading: false
+        isLoading: false,
       });
     }
   },
@@ -131,29 +119,41 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
       // Create task input
       const taskInput = {
-        task,
+        ...task,
         subtasks: subtasks || [],
       };
 
       // Create task
-      const { data, error } = await taskService.createTask(taskInput);
+      const { data, error } = await taskService.createTask(taskInput as unknown as CreateTaskInput);
 
       if (error) throw error;
 
+      // 将DbTask转换为Task类型
+      const transformedTask = data
+        ? ({
+            ...data,
+            date: new Date(data.due_date || Date.now()),
+            completed: data.status === 'completed',
+          } as unknown as Task)
+        : null;
+
       // Update tasks list
-      if (data) {
-        set(state => ({
-          tasks: [...state.tasks, data],
-          isSaving: false
-        }));
+      if (transformedTask) {
+        set(
+          (state) =>
+            ({
+              tasks: [...state.tasks, transformedTask],
+              isSaving: false,
+            } as TaskState)
+        );
       }
 
-      return data;
+      return transformedTask;
     } catch (error) {
       console.error('Error adding task:', error);
       set({
         error: (error as Error).message || 'Failed to add task',
-        isSaving: false
+        isSaving: false,
       });
       return null;
     }
@@ -168,19 +168,19 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       // This is a placeholder for now
 
       // Update local state
-      set(state => ({
-        tasks: state.tasks.map(task =>
-          task.id === taskId
+      set((state) => ({
+        tasks: state.tasks.map((task) =>
+          task.id === String(taskId)
             ? { ...task, status: 'completed' as TaskStatus, completed_at: new Date().toISOString() }
             : task
         ),
-        isSaving: false
+        isSaving: false,
       }));
     } catch (error) {
       console.error('Error completing task:', error);
       set({
         error: (error as Error).message || 'Failed to complete task',
-        isSaving: false
+        isSaving: false,
       });
     }
   },
@@ -194,19 +194,15 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       // This is a placeholder for now
 
       // Update local state
-      set(state => ({
-        tasks: state.tasks.map(task =>
-          task.id === taskId
-            ? { ...task, status }
-            : task
-        ),
-        isSaving: false
+      set((state) => ({
+        tasks: state.tasks.map((task) => (task.id === String(taskId) ? { ...task, status } : task)),
+        isSaving: false,
       }));
     } catch (error) {
       console.error('Error updating task status:', error);
       set({
         error: (error as Error).message || 'Failed to update task status',
-        isSaving: false
+        isSaving: false,
       });
     }
   },
@@ -220,19 +216,15 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       // This is a placeholder for now
 
       // Update local state
-      set(state => ({
-        tasks: state.tasks.map(task =>
-          task.id === taskId
-            ? { ...task, priority }
-            : task
-        ),
-        isSaving: false
+      set((state) => ({
+        tasks: state.tasks.map((task) => (task.id === String(taskId) ? { ...task, priority } : task)),
+        isSaving: false,
       }));
     } catch (error) {
       console.error('Error updating task priority:', error);
       set({
         error: (error as Error).message || 'Failed to update task priority',
-        isSaving: false
+        isSaving: false,
       });
     }
   },
@@ -246,16 +238,16 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       // This is a placeholder for now
 
       // Update local state
-      set(state => ({
-        tasks: state.tasks.filter(task => task.id !== taskId),
-        isSaving: false
+      set((state) => ({
+        tasks: state.tasks.filter((task) => task.id !== String(taskId)),
+        isSaving: false,
       }));
     } catch (error) {
       console.error('Error deleting task:', error);
       set({
         error: (error as Error).message || 'Failed to delete task',
-        isSaving: false
+        isSaving: false,
       });
     }
-  }
-})); 
+  },
+}));

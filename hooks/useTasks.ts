@@ -25,16 +25,12 @@ export function useTasks(): UseTasksReturn {
   const [activeFilter, setActiveFilter] = useState<string>('all');
 
   // 从认证存储中获取用户
-  const { nativeUser, user, authMethod } = useAuthStore();
+  const { user } = useAuthStore();
 
   // 根据认证方式获取用户ID
   const getUserId = (): number => {
-    if (authMethod === 'native' && nativeUser) {
-      return nativeUser.id;
-    } else if (authMethod === 'supabase' && user) {
-      // 对于Supabase认证，我们需要从profiles表中获取user_id
-      // 这是一个简化 - 您可能需要根据实际的数据库结构进行调整
-      return parseInt(user.id);
+    if (user) {
+      return user.id;
     }
     throw new Error('用户未认证');
   };

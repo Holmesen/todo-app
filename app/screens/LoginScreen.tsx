@@ -5,7 +5,6 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
   ActivityIndicator,
   Alert,
@@ -13,7 +12,7 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { Ionicons, FontAwesome } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 
@@ -45,12 +44,8 @@ const LoginScreen = () => {
     router.push('/screens/RegisterScreen');
   };
 
-  const navigateToNativeLogin = () => {
-    router.push('/screens/NativeLoginScreen');
-  };
-
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
       <KeyboardAvoidingView
@@ -62,24 +57,21 @@ const LoginScreen = () => {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.contentArea}>
-            {/* 登录方式选择 */}
-            <View style={styles.authTypeSelector}>
-              <Text style={styles.currentAuthType}>Supabase 认证</Text>
-              <TouchableOpacity onPress={navigateToNativeLogin}>
-                <Text style={styles.otherAuthType}>切换到原生用户登录</Text>
-              </TouchableOpacity>
+            {/* 标题 */}
+            <View style={styles.headerContainer}>
+              <Text style={styles.headerTitle}>账号登录</Text>
+              <Text style={styles.headerSubtitle}>使用你的账号和密码登录</Text>
             </View>
 
             {/* Logo and App Name */}
             <View style={styles.logoArea}>
               <View style={styles.appLogo}>
-                <Ionicons name="checkmark-circle" size={48} color="white" />
+                <Ionicons name="person" size={48} color="white" />
               </View>
               <Text style={styles.appName}>TodoList</Text>
               <Text style={styles.appSlogan}>高效管理您的任务</Text>
             </View>
 
-            {/* Login Form */}
             <View style={styles.form}>
               <Text style={styles.formLabel}>邮箱地址</Text>
               <TextInput
@@ -124,20 +116,9 @@ const LoginScreen = () => {
             {/* Social Login Divider */}
             <View style={styles.divider}>
               <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>或通过以下方式登录</Text>
+              <Text style={styles.dividerText}>或</Text>
               <View style={styles.dividerLine} />
             </View>
-
-            {/* Social Login Buttons */}
-            <TouchableOpacity style={styles.socialBtn} disabled={isLoading}>
-              <FontAwesome name="apple" size={20} color="black" style={styles.socialIcon} />
-              <Text style={styles.socialBtnText}>使用 Apple 登录</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.socialBtn} disabled={isLoading}>
-              <FontAwesome name="google" size={20} color="#DB4437" style={styles.socialIcon} />
-              <Text style={styles.socialBtnText}>使用 Google 登录</Text>
-            </TouchableOpacity>
 
             {/* Sign Up Prompt */}
             <TouchableOpacity
@@ -152,7 +133,7 @@ const LoginScreen = () => {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -168,21 +149,20 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  authTypeSelector: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
+  headerContainer: {
+    marginBottom: 20,
+    marginTop: 20,
   },
-  currentAuthType: {
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  headerSubtitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#007AFF',
-  },
-  otherAuthType: {
-    fontSize: 15,
     color: '#8E8E93',
-    textDecorationLine: 'underline',
+    lineHeight: 22,
   },
   logoArea: {
     alignItems: 'center',
@@ -193,7 +173,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 16,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007aff',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 16,
@@ -201,7 +181,7 @@ const styles = StyleSheet.create({
   appName: {
     fontWeight: '700',
     fontSize: 28,
-    color: '#007AFF',
+    color: '#007aff',
   },
   appSlogan: {
     fontSize: 15,
@@ -233,13 +213,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   forgotPasswordText: {
-    color: '#007AFF',
+    color: '#007aff',
     fontSize: 15,
   },
   primaryBtn: {
     width: '100%',
     padding: 16,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007aff',
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 20,
@@ -267,25 +247,6 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontSize: 14,
   },
-  socialBtn: {
-    width: '100%',
-    flexDirection: 'row',
-    padding: 14,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#D1D1D6',
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 12,
-  },
-  socialIcon: {
-    marginRight: 10,
-  },
-  socialBtnText: {
-    fontWeight: '500',
-    fontSize: 16,
-  },
   signupPrompt: {
     marginTop: 'auto',
     alignItems: 'center',
@@ -295,7 +256,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
   signupLink: {
-    color: '#007AFF',
+    color: '#007aff',
     fontWeight: '600',
   },
 });

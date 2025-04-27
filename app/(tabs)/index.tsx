@@ -113,7 +113,7 @@ export default function HomeScreen() {
   const handleTaskPress = (taskId: string) => {
     // Navigate to the task detail screen
     // We're using string format to avoid the pathname type checking issues
-    router.push(`/task/details/${taskId}`);
+    router.push(`/tasks/details/${taskId}`);
   };
 
   const handleSeeAllPress = (sectionType: 'today' | 'upcoming') => {

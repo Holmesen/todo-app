@@ -52,31 +52,17 @@ const ChevronItem = ({ value }: { value?: string }) => (
 );
 
 export default function ProfileScreen() {
-  const { user, nativeUser, authMethod, signOut } = useAuthStore();
+  const { user, signOut } = useAuthStore();
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  console.log('user: ', user)
-  console.log('nativeUser: ', nativeUser)
-  console.log('authMethod: ', authMethod)
-
-  // 从当前登录用户中获取用户信息
-  const currentUser = authMethod === 'native' ? nativeUser : user;
 
   useEffect(() => {
     // 获取用户设置
     const fetchUserSettings = async () => {
       try {
         setIsLoading(true);
-        let userId: string | number | undefined;
 
-        if (authMethod === 'native' && nativeUser) {
-          userId = nativeUser.id;
-        } else if (authMethod === 'supabase' && user) {
-          userId = user.id;
-        }
-
-        if (!userId) {
+        if (!user?.id) {
           setIsLoading(false);
           return;
         }
@@ -85,7 +71,7 @@ export default function ProfileScreen() {
         const { data, error } = await supabase
           .from('todo_user_settings')
           .select('*')
-          .eq('user_id', userId)
+          .eq('user_id', user.id)
           .single();
 
         if (error) {
@@ -107,7 +93,7 @@ export default function ProfileScreen() {
     };
 
     fetchUserSettings();
-  }, [authMethod, nativeUser, user]);
+  }, [user]);
 
   // 更新用户设置
   const updateUserSetting = async (setting: keyof UserSettings, value: boolean) => {
@@ -116,22 +102,14 @@ export default function ProfileScreen() {
     // 更新本地状态
     setUserSettings(prev => prev ? { ...prev, [setting]: value } : null);
 
-    // 获取用户ID
-    let userId: string | number | undefined;
-    if (authMethod === 'native' && nativeUser) {
-      userId = nativeUser.id;
-    } else if (authMethod === 'supabase' && user) {
-      userId = user.id;
-    }
-
-    if (!userId) return;
+    if (!user?.id) return;
 
     // 更新数据库
     try {
       const { error } = await supabase
         .from('todo_user_settings')
         .upsert({
-          user_id: userId,
+          user_id: user.id,
           [setting]: value,
           // 如果是新记录，添加所有需要的字段
           ...(userSettings ? {} : {
@@ -169,7 +147,7 @@ export default function ProfileScreen() {
   }
 
   // 如果没有用户，显示未登录信息
-  if (!currentUser) {
+  if (!user) {
     return (
       <View style={styles.notLoggedInContainer}>
         <Text style={styles.notLoggedInText}>您尚未登录</Text>
@@ -178,21 +156,17 @@ export default function ProfileScreen() {
   }
 
   // 获取用户信息
-  const username = authMethod === 'native'
-    ? nativeUser?.username
-    : user?.user_metadata?.full_name || user?.email?.split('@')[0];
+  const username = user.username;
 
-  const email = authMethod === 'native' ? nativeUser?.email : user?.email;
+  const email = user.email;
 
-  const profileImage = authMethod === 'native' && nativeUser?.profile_image
-    ? nativeUser.profile_image
-    : 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80';
+  const profileImage = user.profile_image || `https://ui-avatars.com/api/?name=${user.full_name}`;
 
-  const userTimeZone = authMethod === 'native' ? nativeUser?.time_zone : 'UTC+0';
+  const userTimeZone = user.time_zone || 'UTC+0';
 
-  const userTheme = authMethod === 'native' ? nativeUser?.theme : 'Light';
+  const userTheme = user.theme || 'Light';
 
-  const isPremium = authMethod === 'native' ? nativeUser?.is_premium : false;
+  const isPremium = user.is_premium || false;
 
   return (
     <ScrollView style={styles.container}>
