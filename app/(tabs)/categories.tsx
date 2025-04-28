@@ -22,6 +22,7 @@ export default function CategoriesScreen() {
   const router = useRouter();
   const dimensions = useWindowDimensions();
   const [modalVisible, setModalVisible] = useState(false);
+  const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
 
   // Get window width to calculate grid columns
   const numColumns = dimensions.width > 500 ? 3 : 2;
@@ -38,6 +39,7 @@ export default function CategoriesScreen() {
     error,
     fetchCategoriesWithStats,
     addCategory,
+    deleteCategory,
     setSearchQuery,
     getFilteredCategories
   } = useCategoryStore();
@@ -89,6 +91,19 @@ export default function CategoriesScreen() {
     }
   };
 
+  // Handle deleting a category
+  const handleDeleteCategory = async (category: CategoryWithStats) => {
+    try {
+      setDeletingCategoryId(category.id);
+      await deleteCategory(category.id);
+      setDeletingCategoryId(null);
+    } catch (error) {
+      console.error('删除类别失败:', error);
+      setDeletingCategoryId(null);
+      Alert.alert('删除失败', '无法删除该类别，请稍后再试。');
+    }
+  };
+
   // Get filtered categories based on search
   const filteredCategories = getFilteredCategories();
 
@@ -105,6 +120,8 @@ export default function CategoriesScreen() {
     <CategoryListItem
       category={item}
       onPress={handleCategoryPress}
+      onDelete={handleDeleteCategory}
+      isDeleting={deletingCategoryId === item.id}
     />
   );
 
@@ -146,6 +163,7 @@ export default function CategoriesScreen() {
                   <TouchableOpacity
                     style={styles.addButton}
                     onPress={() => setModalVisible(true)}
+                    disabled={isSaving}
                   >
                     <FontAwesome name="plus" size={14} style={styles.addIcon} />
                     <Text style={styles.addButtonText}>Add</Text>
@@ -176,6 +194,11 @@ export default function CategoriesScreen() {
               {/* All Categories Header */}
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>All Categories</Text>
+                {filteredCategories.length > 0 && (
+                  <Text style={styles.categoryCount}>
+                    {filteredCategories.length} {filteredCategories.length === 1 ? 'category' : 'categories'}
+                  </Text>
+                )}
               </View>
             </>
           )}
@@ -261,6 +284,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
+  },
+  categoryCount: {
+    fontSize: 14,
+    color: '#8e8e93',
   },
   addButton: {
     flexDirection: 'row',

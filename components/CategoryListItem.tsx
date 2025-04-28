@@ -1,17 +1,46 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { CategoryIcon } from './CategoryIcon';
 import { CategoryWithStats } from '../store/categoryStore';
+import { FontAwesome } from '@expo/vector-icons';
 
 interface CategoryListItemProps {
   category: CategoryWithStats;
   onPress?: (category: CategoryWithStats) => void;
+  onDelete?: (category: CategoryWithStats) => void;
+  isDeleting?: boolean;
 }
 
-export function CategoryListItem({ category, onPress }: CategoryListItemProps) {
+export function CategoryListItem({
+  category,
+  onPress,
+  onDelete,
+  isDeleting = false
+}: CategoryListItemProps) {
   const handlePress = () => {
     if (onPress) {
       onPress(category);
+    }
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      // 显示确认对话框
+      Alert.alert(
+        "删除类别",
+        `确定要删除"${category.name}"类别吗？此操作不可恢复，该类别下的任务将不再属于任何类别。`,
+        [
+          {
+            text: "取消",
+            style: "cancel"
+          },
+          {
+            text: "删除",
+            onPress: () => onDelete(category),
+            style: "destructive"
+          }
+        ]
+      );
     }
   };
 
@@ -20,6 +49,7 @@ export function CategoryListItem({ category, onPress }: CategoryListItemProps) {
       style={styles.container}
       onPress={handlePress}
       activeOpacity={0.9}
+      disabled={isDeleting}
     >
       <CategoryIcon
         name={category.icon || 'tag'}
@@ -41,6 +71,21 @@ export function CategoryListItem({ category, onPress }: CategoryListItemProps) {
         </View>
         <Text style={styles.progressText}>{category.progressPercentage}%</Text>
       </View>
+
+      {/* 删除按钮 */}
+      {onDelete && (
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={handleDelete}
+          disabled={isDeleting}
+        >
+          {isDeleting ? (
+            <View style={styles.loadingIndicator} />
+          ) : (
+            <FontAwesome name="trash" size={16} color="#FF3B30" />
+          )}
+        </TouchableOpacity>
+      )}
     </TouchableOpacity>
   );
 }
@@ -70,6 +115,7 @@ const styles = StyleSheet.create({
   progressContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 10,
   },
   progressBar: {
     width: 70,
@@ -88,4 +134,22 @@ const styles = StyleSheet.create({
     color: '#8e8e93',
     fontWeight: '500',
   },
+  deleteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFEBEB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  loadingIndicator: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#FF3B30',
+    borderTopColor: 'transparent',
+    transform: [{ rotate: '45deg' }],
+  }
 }); 
