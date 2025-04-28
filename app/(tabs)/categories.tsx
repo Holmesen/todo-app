@@ -108,6 +108,10 @@ export default function CategoriesScreen() {
     />
   );
 
+  const fetchCategoriesWithStatsSync = () => {
+    fetchCategoriesWithStats()
+  }
+
   return (
     <View style={styles.container}>
       {/* Search bar */}
@@ -126,7 +130,7 @@ export default function CategoriesScreen() {
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity
             style={styles.retryButton}
-            onPress={fetchCategoriesWithStats}
+            onPress={fetchCategoriesWithStatsSync}
           >
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>

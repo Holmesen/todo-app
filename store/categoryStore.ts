@@ -24,7 +24,7 @@ interface CategoryState {
 
   // Actions
   fetchCategories: () => Promise<void>;
-  fetchCategoriesWithStats: () => Promise<void>;
+  fetchCategoriesWithStats: (options?: { forceRefresh?: boolean }) => Promise<void>;
   addCategory: (category: Omit<Category, 'id' | 'created_at' | 'updated_at'>) => Promise<Category | null>;
   updateCategory: (
     id: number,
@@ -75,8 +75,15 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
   },
 
   // Fetch categories with task stats
-  fetchCategoriesWithStats: async () => {
+  fetchCategoriesWithStats: async (options = {}) => {
+    const { forceRefresh = false } = options;
+
     try {
+      // If there's already data and we don't need to force refresh, don't re-fetch
+      if (get().categoriesWithStats.length > 0 && !forceRefresh) {
+        return;
+      }
+
       set({ isLoading: true, error: null });
 
       // Get user ID from auth store
@@ -124,6 +131,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
       const featuredCategories = categoriesWithStats.filter((category) => category.is_featured);
 
       set({
+        categories: categories || [],
         categoriesWithStats,
         featuredCategories,
         isLoading: false,
@@ -153,8 +161,8 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
           isSaving: false,
         }));
 
-        // Refresh categories with stats
-        await get().fetchCategoriesWithStats();
+        // Refresh categories with stats to include the new category
+        await get().fetchCategoriesWithStats({ forceRefresh: true });
       }
 
       return data;
@@ -184,7 +192,7 @@ export const useCategoryStore = create<CategoryState>((set, get) => ({
       }));
 
       // Refresh categories with stats
-      await get().fetchCategoriesWithStats();
+      await get().fetchCategoriesWithStats({ forceRefresh: true });
     } catch (error) {
       console.error('Error updating category:', error);
       set({

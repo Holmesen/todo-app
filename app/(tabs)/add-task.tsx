@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Text,
 } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -72,8 +73,16 @@ function Button({
   );
 }
 
+type CategoryOptions = {
+  label: string
+  value: string
+  color: string
+}
+
 export default function AddTaskScreen() {
   const insets = useSafeAreaInsets();
+
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOptions[]>([])
 
   // 使用自定义表单钩子
   const {
@@ -92,16 +101,21 @@ export default function AddTaskScreen() {
     fetchCategories,
   } = useAddTaskForm();
 
-  // 组件挂载时获取分类数据
+  // 每次页面激活时获取最新的分类数据
   useEffect(() => {
+    // 每次进入 add-task 页面时，确保从 store 获取最新的类别数据
     fetchCategories();
   }, []);
 
-  // 格式化分类数据供选择器使用
-  const categoryOptions = categories.map(category => ({
-    label: category.name,
-    value: category.id?.toString() || '',
-  }));
+  useEffect(() => {
+    // 格式化分类数据供选择器使用
+    setCategoryOptions(categories.map(category => ({
+      label: category.name,
+      value: category.id?.toString() || '',
+      // 可以添加颜色信息用于UI展示
+      color: category.color,
+    })))
+  }, [categories])
 
   // 保存并返回上一页
   const handleSave = async () => {
@@ -169,7 +183,15 @@ export default function AddTaskScreen() {
             onValueChange={(value) => updateFormData('category', value)}
             items={categoryOptions}
             isLoading={categoriesLoading}
-          />
+          >
+            {/* 刷新按钮 */}
+            <TouchableOpacity
+              style={{ padding: 10, borderRadius: 0, display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+              onPress={() => fetchCategories()}
+            >
+              <FontAwesome name="refresh" size={16} color="black" />
+            </TouchableOpacity>
+          </FormSelect>
 
           <View style={styles.formGroup}>
             <View style={styles.row}>
