@@ -29,7 +29,7 @@ export function ActionButton({ label, isActive = false, onPress, color, icon }: 
         styles.button,
         isActive
           ? { backgroundColor: activeColor, borderColor: activeTextColor, borderWidth: 1 }
-          : styles.inactiveButton,
+          : { backgroundColor: defaultInactiveColor },
       ]}
       onPress={onPress}
     >
@@ -44,9 +44,7 @@ export function ActionButton({ label, isActive = false, onPress, color, icon }: 
       <Text
         style={[
           styles.buttonText,
-          isActive
-            ? { color: activeTextColor }
-            : styles.inactiveButtonText,
+          { color: isActive ? activeTextColor : defaultInactiveTextColor }
         ]}
       >
         {label}
@@ -64,21 +62,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  activeButton: {
-    backgroundColor: '#E3F2FD', // 浅蓝色背景
-  },
-  inactiveButton: {
-    backgroundColor: '#F2F2F7', // 浅灰色背景
-  },
   buttonText: {
     fontWeight: '600',
     fontSize: 14,
-  },
-  activeButtonText: {
-    color: '#007AFF', // 蓝色文本
-  },
-  inactiveButtonText: {
-    color: '#666666', // 灰色文本
   },
   icon: {
     marginRight: 6,

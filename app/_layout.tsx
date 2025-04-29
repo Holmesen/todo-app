@@ -1,22 +1,20 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { AuthProvider } from '../context/AuthProvider';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // 应用入口布局组件
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <SafeAreaProvider>
-        <SafeAreaView style={{ flex: 1 }}>
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: 'white' },
-            }}
-          />
-        </SafeAreaView>
-      </SafeAreaProvider>
+      <SafeAreaView style={{ flex: 1 }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: 'white' },
+          }}
+        />
+      </SafeAreaView>
     </AuthProvider>
   );
 }

@@ -9,6 +9,7 @@ import {
   Alert,
   ActivityIndicator,
   RefreshControl,
+  TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
@@ -37,17 +38,18 @@ export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<string>('all');
 
   // Use our tasks hook to fetch data from Supabase
   const {
     todayTasks,
     upcomingTasks,
+    completedTasks,
     filteredTasks,
     allTasks,
     isLoading: isTasksLoading,
     error: tasksError,
     refetch: refetchTasks,
-    setActiveFilter
   } = useTasks();
 
   // Use our categories hook to fetch categories from Supabase
@@ -116,11 +118,25 @@ export default function HomeScreen() {
     router.push(`/tasks/details/${taskId}`);
   };
 
-  const handleSeeAllPress = (sectionType: 'today' | 'upcoming') => {
+  const handleSeeAllPress = (sectionType: 'today' | 'upcoming' | 'search' | 'completed') => {
     // Update active filter based on which section was pressed
     setActiveFilter(sectionType);
-    // For now, just show an alert since we haven't set up the tasks list screen yet
-    Alert.alert('查看全部', `查看所有${sectionType === 'today' ? '今天' : '即将到来'}的任务`);
+
+    // Navigate to the tasks list page with the appropriate filter
+    router.push({
+      pathname: '/tasks',
+      params: {
+        filter: sectionType,
+        title: sectionType === 'today' ? '今天的任务' :
+          sectionType === 'upcoming' ? '即将到来的任务' :
+            sectionType === 'completed' ? '已完成的任务' :
+              '搜索结果'
+      }
+    });
+  };
+
+  const handleFilterChange = (filterId: string) => {
+    setActiveFilter(filterId);
   };
 
   return (
@@ -151,26 +167,42 @@ export default function HomeScreen() {
           placeholder="搜索任务..."
         />
 
-        {/* Quick Action Buttons - Hide when searching */}
-        {!isSearching && (
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.actionButtonsContainer}
-            contentContainerStyle={styles.actionButtons}
-          >
-            {quickActionButtons.map((button) => (
-              <ActionButton
-                key={button.id}
-                label={button.label}
-                color={button.color}
-                icon={button.icon}
-                isActive={button.id === 'all' ? filteredTasks === todayTasks : false}
-                onPress={() => setActiveFilter(button.id)}
-              />
-            ))}
-          </ScrollView>
-        )}
+        {/* Filter Buttons */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterButtonsContainer}
+          contentContainerStyle={styles.filterButtons}
+        >
+          <ActionButton
+            label="全部"
+            icon="list"
+            isActive={activeFilter === 'all'}
+            onPress={() => handleFilterChange('all')}
+            color="#007AFF"
+          />
+          <ActionButton
+            label="今天"
+            icon="calendar"
+            isActive={activeFilter === 'today'}
+            onPress={() => handleFilterChange('today')}
+            color="#34C759"
+          />
+          <ActionButton
+            label="即将到来"
+            icon="clock-o"
+            isActive={activeFilter === 'upcoming'}
+            onPress={() => handleFilterChange('upcoming')}
+            color="#FF9500"
+          />
+          <ActionButton
+            label="已完成"
+            icon="check"
+            isActive={activeFilter === 'completed'}
+            onPress={() => handleFilterChange('completed')}
+            color="#5856D6"
+          />
+        </ScrollView>
 
         {/* Error State */}
         {error && (
@@ -192,7 +224,7 @@ export default function HomeScreen() {
         {isSearching && !isLoading && !error && (
           <TaskSection
             title="搜索结果"
-            onSeeAll={searchResults.length > 0 ? () => { Alert.alert('查看全部', '查看所有匹配的任务'); } : undefined}
+            onSeeAll={searchResults.length > 0 ? () => handleSeeAllPress('search') : undefined}
           >
             {searchResults.length === 0 ? (
               <Text style={styles.emptyStateText}>没有找到匹配的任务</Text>
@@ -220,7 +252,8 @@ export default function HomeScreen() {
             {todayTasks.length === 0 ? (
               <Text style={styles.emptyStateText}>今天没有安排任务</Text>
             ) : (
-              todayTasks.map((task) => (
+              // 只显示最近的3个今天的任务
+              todayTasks.slice(0, 3).map((task) => (
                 <TaskItem
                   key={task.id?.toString()}
                   id={task.id?.toString() || ''}
@@ -230,6 +263,14 @@ export default function HomeScreen() {
                   onPress={handleTaskPress}
                 />
               ))
+            )}
+            {todayTasks.length > 3 && (
+              <TouchableOpacity
+                style={styles.moreButton}
+                onPress={() => handleSeeAllPress('today')}
+              >
+                <Text style={styles.moreButtonText}>查看全部 {todayTasks.length} 个任务</Text>
+              </TouchableOpacity>
             )}
           </TaskSection>
         )}
@@ -243,7 +284,8 @@ export default function HomeScreen() {
             {upcomingTasks.length === 0 ? (
               <Text style={styles.emptyStateText}>没有即将到来的任务</Text>
             ) : (
-              upcomingTasks.map((task) => (
+              // 只显示最近的3个即将到来的任务
+              upcomingTasks.slice(0, 3).map((task) => (
                 <TaskItem
                   key={task.id?.toString()}
                   id={task.id?.toString() || ''}
@@ -253,6 +295,46 @@ export default function HomeScreen() {
                   onPress={handleTaskPress}
                 />
               ))
+            )}
+            {upcomingTasks.length > 3 && (
+              <TouchableOpacity
+                style={styles.moreButton}
+                onPress={() => handleSeeAllPress('upcoming')}
+              >
+                <Text style={styles.moreButtonText}>查看全部 {upcomingTasks.length} 个任务</Text>
+              </TouchableOpacity>
+            )}
+          </TaskSection>
+        )}
+
+        {/* Completed Tasks Section - Hide when searching */}
+        {!isSearching && !isLoading && !error && (
+          <TaskSection
+            title="已完成"
+            onSeeAll={() => handleSeeAllPress('completed')}
+          >
+            {completedTasks.length === 0 ? (
+              <Text style={styles.emptyStateText}>暂无已完成的任务</Text>
+            ) : (
+              // 只显示最近的3个已完成任务
+              completedTasks.slice(0, 3).map((task) => (
+                <TaskItem
+                  key={task.id?.toString()}
+                  id={task.id?.toString() || ''}
+                  title={task.title}
+                  priority={task.priority}
+                  time={taskService.formatTaskTime(task)}
+                  onPress={handleTaskPress}
+                />
+              ))
+            )}
+            {completedTasks.length > 3 && (
+              <TouchableOpacity
+                style={styles.moreButton}
+                onPress={() => handleSeeAllPress('completed')}
+              >
+                <Text style={styles.moreButtonText}>查看全部 {completedTasks.length} 个任务</Text>
+              </TouchableOpacity>
             )}
           </TaskSection>
         )}
@@ -302,5 +384,22 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     padding: 20,
     fontSize: 16,
+  },
+  filterButtonsContainer: {
+    marginTop: 4,
+    marginBottom: 20,
+  },
+  filterButtons: {
+    paddingVertical: 4,
+  },
+  moreButton: {
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  moreButtonText: {
+    color: '#007AFF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 }); 
