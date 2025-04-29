@@ -61,7 +61,7 @@ export const taskService = {
     try {
       // Fetch the task
       const { data: taskData, error: taskError } = await supabase
-        .from('tasks')
+        .from('todo_tasks')
         .select('*')
         .eq('id', taskId)
         .single();
@@ -71,7 +71,7 @@ export const taskService = {
 
       // Fetch subtasks
       const { data: subtasks, error: subtasksError } = await supabase
-        .from('subtasks')
+        .from('todo_subtasks')
         .select('*')
         .eq('task_id', taskId);
 
@@ -79,7 +79,7 @@ export const taskService = {
 
       // Fetch attachments (if available)
       const { data: attachments, error: attachmentsError } = await supabase
-        .from('attachments')
+        .from('todo_attachments')
         .select('*')
         .eq('task_id', taskId);
 
@@ -105,12 +105,7 @@ export const taskService = {
   // Update a task
   async updateTask(task: Partial<Task> & { id: string }): Promise<Task> {
     try {
-      const { data, error } = await supabase
-        .from('tasks')
-        .update(task)
-        .eq('id', task.id)
-        .select()
-        .single();
+      const { data, error } = await supabase.from('todo_tasks').update(task).eq('id', task.id).select().single();
 
       if (error) throw error;
       return {
@@ -128,10 +123,7 @@ export const taskService = {
   // Delete a task
   async deleteTask(taskId: string): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('tasks')
-        .delete()
-        .eq('id', taskId);
+      const { error } = await supabase.from('todo_tasks').delete().eq('id', taskId);
 
       if (error) throw error;
     } catch (error) {
@@ -144,7 +136,7 @@ export const taskService = {
   async toggleSubtaskCompletion(subtaskId: string, completed: boolean): Promise<Subtask> {
     try {
       const { data, error } = await supabase
-        .from('subtasks')
+        .from('todo_subtasks')
         .update({ completed })
         .eq('id', subtaskId)
         .select()
@@ -157,4 +149,4 @@ export const taskService = {
       throw error;
     }
   },
-}; 
+};
