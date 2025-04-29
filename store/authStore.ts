@@ -31,6 +31,8 @@ interface AuthState {
   signUp: (username: string, email: string, password: string, fullName: string) => Promise<void>;
   signOut: () => Promise<void>;
   initialize: () => Promise<void>;
+  // 添加更新用户信息的方法
+  updateUser: (userData: Partial<User>) => Promise<void>;
 }
 
 // 存储用户信息的键
@@ -151,6 +153,33 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         error: (error as Error).message,
         isLoading: false,
       });
+    }
+  },
+
+  // 更新用户信息方法
+  updateUser: async (userData: Partial<User>) => {
+    try {
+      const currentUser = get().user;
+      if (!currentUser) {
+        throw new Error('没有登录用户');
+      }
+
+      // 合并用户数据
+      const updatedUser = {
+        ...currentUser,
+        ...userData,
+      };
+
+      // 存储更新后的用户信息到 AsyncStorage
+      await AsyncStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+
+      // 更新状态
+      set({
+        user: updatedUser,
+      });
+    } catch (error) {
+      console.error('更新用户信息时出错:', error);
+      throw error;
     }
   },
 }));

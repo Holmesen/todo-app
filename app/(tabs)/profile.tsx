@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Switch, Ac
 import { FontAwesome } from '@expo/vector-icons';
 import { useAuthStore } from '../../store/authStore';
 import { supabase } from '../../lib/supabase';
+import { useRouter } from 'expo-router';
 
 interface UserSettings {
   notifications_enabled: boolean;
@@ -55,6 +56,7 @@ export default function ProfileScreen() {
   const { user, signOut } = useAuthStore();
   const [userSettings, setUserSettings] = useState<UserSettings | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     // 获取用户设置
@@ -133,6 +135,11 @@ export default function ProfileScreen() {
     }
   };
 
+  // 处理导航到编辑个人资料页面
+  const handleNavigateToEditProfile = () => {
+    router.push('/(profile)/edit-profile');
+  };
+
   // 处理登出
   const handleSignOut = async () => {
     await signOut();
@@ -180,7 +187,10 @@ export default function ProfileScreen() {
         />
         <Text style={styles.userName}>{username}</Text>
         <Text style={styles.userEmail}>{email}</Text>
-        <TouchableOpacity style={styles.editProfileBtn}>
+        <TouchableOpacity
+          style={styles.editProfileBtn}
+          onPress={handleNavigateToEditProfile}
+        >
           <FontAwesome name="edit" size={14} color="#007aff" style={styles.editIcon} />
           <Text style={styles.editProfileText}>编辑个人资料</Text>
         </TouchableOpacity>
