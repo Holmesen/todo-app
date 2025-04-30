@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -16,6 +16,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { Picker } from '@react-native-picker/picker';
 import { TaskWithRelations } from '@/services/taskService';
+import { useAddTaskForm } from '@/hooks/useAddTaskForm';
 
 interface SubtaskInput {
   id: number | null;
@@ -31,10 +32,17 @@ interface TaskEditFormProps {
   isSaving: boolean;
 }
 
+type CategoryOptions = {
+  label: string;
+  value: string;
+  color: string;
+};
+
 const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isSaving }) => {
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description || '');
   const [priority, setPriority] = useState(task.priority);
+  const [categoryId, setCategoryId] = useState<number | string | null>(task.category_id);
   const [date, setDate] = useState(task.date);
   const [time, setTime] = useState(task.time ? new Date(`2000-01-01T${task.time}`) : null);
   const [subtasks, setSubtasks] = useState<SubtaskInput[]>(
@@ -48,6 +56,26 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [hasErrors, setHasErrors] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOptions[]>([]);
+
+  const { categories, fetchCategories } = useAddTaskForm();
+
+  useEffect(() => {
+    fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // 格式化分类数据供选择器使用
+    setCategoryOptions(
+      categories.map((category) => ({
+        label: category.name,
+        value: category.id?.toString() || '',
+        // 可以添加颜色信息用于UI展示
+        color: category.color,
+      }))
+    );
+  }, [categories]);
 
   // Handle date change
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -131,6 +159,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
       title,
       description: description || null,
       priority,
+      category_id: categoryId ? String(categoryId) : null,
       date,
       time: timeString,
       subtasks: [
@@ -197,6 +226,22 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
             multiline
             numberOfLines={4}
           />
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Category</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={categoryId}
+              onValueChange={(itemValue) => setCategoryId(itemValue)}
+              style={styles.picker}
+            >
+              <Picker.Item label="No Category" value={null} />
+              {categoryOptions.map((category) => (
+                <Picker.Item key={category.value} label={category.label} value={category.value} />
+              ))}
+            </Picker>
+          </View>
         </View>
 
         <View style={styles.formGroup}>
