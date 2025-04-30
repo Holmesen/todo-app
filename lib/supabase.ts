@@ -46,12 +46,12 @@ export interface Task {
   created_at: Date;
   updated_at: Date;
   subtasks?: Subtask[];
-  attachments?: Array<{
+  attachments?: {
     id: string;
     uri: string;
     type: string;
     task_id: string;
-  }>;
+  }[];
 }
 
 // Task service helpers

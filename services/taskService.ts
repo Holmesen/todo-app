@@ -189,16 +189,6 @@ function transformDbTaskToAppTask(dbTask: DbTask): Task {
   };
 }
 
-// Transform DB Subtask to App Subtask
-function transformDbSubtaskToAppSubtask(dbSubtask: DbSubtask): Subtask {
-  return {
-    id: dbSubtask.id,
-    title: dbSubtask.title,
-    completed: dbSubtask.is_completed,
-    task_id: dbSubtask.task_id.toString(),
-  };
-}
-
 class TaskService {
   calculateReminderTime(dueDate: string, dueTime: string | null, reminderType: string) {
     if (reminderType === 'none') return null;

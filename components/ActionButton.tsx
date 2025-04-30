@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 
 interface ActionButtonProps {
@@ -41,14 +41,7 @@ export function ActionButton({ label, isActive = false, onPress, color, icon }: 
           style={styles.icon}
         />
       )}
-      <Text
-        style={[
-          styles.buttonText,
-          { color: isActive ? activeTextColor : defaultInactiveTextColor }
-        ]}
-      >
-        {label}
-      </Text>
+      <Text style={[styles.buttonText, { color: isActive ? activeTextColor : defaultInactiveTextColor }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
@@ -69,4 +62,4 @@ const styles = StyleSheet.create({
   icon: {
     marginRight: 6,
   },
-}); 
+});

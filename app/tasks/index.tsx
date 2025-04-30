@@ -21,26 +21,12 @@ export default function TaskListScreen() {
   // State
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState<string>(filter || 'all');
 
   // Use the tasks hook to get filtered tasks
-  const {
-    todayTasks,
-    upcomingTasks,
-    allTasks,
-    isLoading: isTasksLoading,
-    error: tasksError,
-    refetch: refetchTasks,
-  } = useTasks();
+  const { isLoading: isTasksLoading, error: tasksError, refetch: refetchTasks } = useTasks();
 
   // Store
-  const {
-    tasks,
-    isLoading: storeLoading,
-    fetchTasks,
-    completeTask,
-    error: storeError
-  } = useTaskStore();
+  const { tasks, isLoading: storeLoading, fetchTasks, error: storeError } = useTaskStore();
 
   // Combined loading and error states
   const isLoading = isTasksLoading || storeLoading;
@@ -50,6 +36,7 @@ export default function TaskListScreen() {
   useEffect(() => {
     fetchTasks();
     refetchTasks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Handle refresh
@@ -62,19 +49,15 @@ export default function TaskListScreen() {
   // Filter tasks based on search query and filter parameter
   const getFilteredTasks = () => {
     let filteredBySearch = searchQuery
-      ? tasks.filter(task =>
-        task.title.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+      ? tasks.filter((task) => task.title.toLowerCase().includes(searchQuery.toLowerCase()))
       : tasks;
 
     // Apply additional filtering based on filter parameter or active filter
-    const currentFilter = filter || activeFilter;
+    const currentFilter = filter || 'all';
 
     if (currentFilter === 'today') {
-      return filteredBySearch.filter(task =>
-        !task.completed &&
-        task.date &&
-        new Date(task.date).toDateString() === new Date().toDateString()
+      return filteredBySearch.filter(
+        (task) => !task.completed && task.date && new Date(task.date).toDateString() === new Date().toDateString()
       );
     } else if (currentFilter === 'upcoming') {
       const today = new Date();
@@ -83,14 +66,11 @@ export default function TaskListScreen() {
       const nextWeek = new Date(today);
       nextWeek.setDate(nextWeek.getDate() + 7);
 
-      return filteredBySearch.filter(task =>
-        !task.completed &&
-        task.date &&
-        new Date(task.date) > today &&
-        new Date(task.date) <= nextWeek
+      return filteredBySearch.filter(
+        (task) => !task.completed && task.date && new Date(task.date) > today && new Date(task.date) <= nextWeek
       );
     } else if (currentFilter === 'completed') {
-      return filteredBySearch.filter(task => task.completed);
+      return filteredBySearch.filter((task) => task.completed);
     } else {
       return filteredBySearch;
     }
@@ -100,36 +80,29 @@ export default function TaskListScreen() {
 
   // Group tasks by status if no specific filter is provided
   const pendingTasks = filter
-    ? filteredTasks.filter(task => !task.completed)
-    : filteredTasks.filter(task => !task.completed);
+    ? filteredTasks.filter((task) => !task.completed)
+    : filteredTasks.filter((task) => !task.completed);
 
   const completedTasks = filter
     ? [] // Don't show completed tasks for filtered views
-    : filteredTasks.filter(task => task.completed);
+    : filteredTasks.filter((task) => task.completed);
 
   const overdueTasks = filter
     ? [] // Don't show overdue tasks separately for filtered views
-    : filteredTasks.filter(task =>
-      !task.completed && task.date && new Date(task.date) < new Date()
-    );
+    : filteredTasks.filter((task) => !task.completed && task.date && new Date(task.date) < new Date());
 
   // Navigate to task details
   const handleTaskPress = (taskId: string) => {
     router.push({
-      pathname: "/tasks/details/[id]",
-      params: { id: taskId }
+      pathname: '/tasks/details/[id]',
+      params: { id: taskId },
     });
-  };
-
-  // Handle task completion
-  const handleCompleteTask = (taskId: string) => {
-    completeTask(Number(taskId));
   };
 
   // Handle creating a new task
   const handleCreateTask = () => {
     router.push({
-      pathname: '/(tabs)/add-task'
+      pathname: '/(tabs)/add-task',
     });
   };
 
@@ -152,15 +125,6 @@ export default function TaskListScreen() {
     return '';
   };
 
-  // Handle filter change
-  const handleFilterChange = (filterId: string) => {
-    setActiveFilter(filterId);
-    // 如果是从首页传入的筛选，切换时需要清除url参数
-    if (filter && filterId !== filter) {
-      router.setParams({});
-    }
-  };
-
   return (
     <View style={styles.container}>
       <Stack.Screen
@@ -174,21 +138,14 @@ export default function TaskListScreen() {
           headerShadowVisible: false,
           headerBackVisible: true,
           headerRight: () => (
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={handleCreateTask}
-            >
+            <TouchableOpacity style={styles.addButton} onPress={handleCreateTask}>
               <FontAwesome name="plus" size={20} color="#007AFF" />
             </TouchableOpacity>
           ),
         }}
       />
 
-      <SearchBar
-        placeholder="搜索任务..."
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+      <SearchBar placeholder="搜索任务..." value={searchQuery} onChangeText={setSearchQuery} />
 
       {isLoading && !refreshing ? (
         <View style={styles.loadingContainer}>
@@ -204,9 +161,7 @@ export default function TaskListScreen() {
       ) : (
         <ScrollView
           contentContainerStyle={styles.scrollContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />}
         >
           {filter ? (
             // Display tasks based on filter
@@ -218,13 +173,10 @@ export default function TaskListScreen() {
                     {filter === 'today'
                       ? '今天没有任务'
                       : filter === 'upcoming'
-                        ? '未来 7 天没有任务'
-                        : '没有匹配的任务'}
+                      ? '未来 7 天没有任务'
+                      : '没有匹配的任务'}
                   </Text>
-                  <TouchableOpacity
-                    style={styles.createTaskButton}
-                    onPress={handleCreateTask}
-                  >
+                  <TouchableOpacity style={styles.createTaskButton} onPress={handleCreateTask}>
                     <Text style={styles.createTaskButtonText}>创建新任务</Text>
                   </TouchableOpacity>
                 </View>
@@ -234,12 +186,10 @@ export default function TaskListScreen() {
                   <Text style={styles.filterDescription}>{getFilterDescription()}</Text>
 
                   {/* Filtered tasks count */}
-                  <Text style={styles.taskCountText}>
-                    {filteredTasks.length} 个任务
-                  </Text>
+                  <Text style={styles.taskCountText}>{filteredTasks.length} 个任务</Text>
 
                   {/* Filtered tasks list */}
-                  {filteredTasks.map(task => (
+                  {filteredTasks.map((task) => (
                     <View key={task.id} style={styles.taskItemWrapper}>
                       <TaskItem
                         id={task.id}
@@ -258,11 +208,8 @@ export default function TaskListScreen() {
             <View>
               {overdueTasks.length > 0 && (
                 <View style={styles.sectionContainer}>
-                  <TaskSection
-                    title="逾期"
-                    onSeeAll={() => console.log("See all overdue tasks")}
-                  >
-                    {overdueTasks.map(task => (
+                  <TaskSection title="逾期" onSeeAll={() => console.log('See all overdue tasks')}>
+                    {overdueTasks.map((task) => (
                       <View key={task.id} style={styles.taskItemWrapper}>
                         <TaskItem
                           id={task.id}
@@ -279,11 +226,8 @@ export default function TaskListScreen() {
 
               {pendingTasks.length > 0 && (
                 <View style={styles.sectionContainer}>
-                  <TaskSection
-                    title="待办"
-                    onSeeAll={() => console.log("See all pending tasks")}
-                  >
-                    {pendingTasks.map(task => (
+                  <TaskSection title="待办" onSeeAll={() => console.log('See all pending tasks')}>
+                    {pendingTasks.map((task) => (
                       <View key={task.id} style={styles.taskItemWrapper}>
                         <TaskItem
                           id={task.id}
@@ -300,11 +244,8 @@ export default function TaskListScreen() {
 
               {completedTasks.length > 0 && (
                 <View style={styles.sectionContainer}>
-                  <TaskSection
-                    title="已完成"
-                    onSeeAll={() => console.log("See all completed tasks")}
-                  >
-                    {completedTasks.map(task => (
+                  <TaskSection title="已完成" onSeeAll={() => console.log('See all completed tasks')}>
+                    {completedTasks.map((task) => (
                       <View key={task.id} style={styles.taskItemWrapper}>
                         <TaskItem
                           id={task.id}
@@ -323,13 +264,8 @@ export default function TaskListScreen() {
                 <View style={styles.emptyContainer}>
                   <FontAwesome name="tasks" size={64} color="#d1d1d6" />
                   <Text style={styles.emptyText}>暂无任务</Text>
-                  <Text style={styles.emptySubText}>
-                    点击下方按钮创建您的第一个任务
-                  </Text>
-                  <TouchableOpacity
-                    style={styles.createTaskButton}
-                    onPress={handleCreateTask}
-                  >
+                  <Text style={styles.emptySubText}>点击下方按钮创建您的第一个任务</Text>
+                  <TouchableOpacity style={styles.createTaskButton} onPress={handleCreateTask}>
                     <Text style={styles.createTaskButtonText}>创建新任务</Text>
                   </TouchableOpacity>
                 </View>
@@ -341,10 +277,7 @@ export default function TaskListScreen() {
 
       {/* Floating action button for creating new task */}
       {!isLoading && !error && filteredTasks.length > 0 && (
-        <TouchableOpacity
-          style={styles.floatingButton}
-          onPress={handleCreateTask}
-        >
+        <TouchableOpacity style={styles.floatingButton} onPress={handleCreateTask}>
           <FontAwesome name="plus" size={24} color="white" />
         </TouchableOpacity>
       )}
@@ -479,4 +412,4 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-}); 
+});

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 
 interface BarChartData {
   label: string;
@@ -24,24 +24,17 @@ export const BarChart = ({
   barColor = '#007AFF',
   maxValue: propMaxValue,
   showGridLines = true,
-  gridLineCount = 4
+  gridLineCount = 4,
 }: BarChartProps) => {
   // Calculate max value for chart
-  const maxValue = propMaxValue || Math.max(...data.map(item => item.value), 1);
-  const screenWidth = Dimensions.get('window').width;
-  const chartWidth = screenWidth - 32; // Account for container padding
+  const maxValue = propMaxValue || Math.max(...data.map((item) => item.value), 1);
 
   // Generate grid lines
   const gridLines = [];
   if (showGridLines) {
     for (let i = 1; i <= gridLineCount; i++) {
-      const position = height - (i * (height / gridLineCount));
-      gridLines.push(
-        <View
-          key={`grid-${i}`}
-          style={[styles.gridLine, { top: position }]}
-        />
-      );
+      const position = height - i * (height / gridLineCount);
+      gridLines.push(<View key={`grid-${i}`} style={[styles.gridLine, { top: position }]} />);
     }
   }
 
@@ -63,8 +56,8 @@ export const BarChart = ({
                   {
                     height: Math.max(barHeight, 2), // Minimum bar height for visibility
                     width: barWidth,
-                    backgroundColor: barColor
-                  }
+                    backgroundColor: barColor,
+                  },
                 ]}
               />
               <Text style={styles.barLabel}>{item.label}</Text>
@@ -108,4 +101,4 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     marginTop: 6,
   },
-}); 
+});

@@ -7,7 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  useWindowDimensions
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FontAwesome } from '@expo/vector-icons';
@@ -41,7 +41,7 @@ export default function CategoriesScreen() {
     addCategory,
     deleteCategory,
     setSearchQuery,
-    getFilteredCategories
+    getFilteredCategories,
   } = useCategoryStore();
 
   // Load categories on initial render
@@ -49,6 +49,7 @@ export default function CategoriesScreen() {
     if (user?.id) {
       fetchCategoriesWithStats();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Handle category selection
@@ -57,17 +58,12 @@ export default function CategoriesScreen() {
     // Since there's no direct tasks route, use the index route with query params
     router.push({
       pathname: '/',
-      params: { categoryId: category.id.toString() }
+      params: { categoryId: category.id.toString() },
     });
   };
 
   // Handle adding a new category
-  const handleAddCategory = async (category: {
-    name: string;
-    color: string;
-    icon: string;
-    is_featured: boolean
-  }) => {
+  const handleAddCategory = async (category: { name: string; color: string; icon: string; is_featured: boolean }) => {
     if (!user?.id) {
       Alert.alert('Error', 'You must be logged in to add categories');
       return;
@@ -76,7 +72,7 @@ export default function CategoriesScreen() {
     // Add the user id
     const newCategory = {
       ...category,
-      user_id: Number(user.id)
+      user_id: Number(user.id),
     };
 
     // Add to the store
@@ -109,10 +105,7 @@ export default function CategoriesScreen() {
 
   // Render featured category item
   const renderFeaturedItem = ({ item }: { item: CategoryWithStats }) => (
-    <CategoryCard
-      category={item}
-      onPress={handleCategoryPress}
-    />
+    <CategoryCard category={item} onPress={handleCategoryPress} />
   );
 
   // Render category list item
@@ -126,17 +119,13 @@ export default function CategoriesScreen() {
   );
 
   const fetchCategoriesWithStatsSync = () => {
-    fetchCategoriesWithStats()
-  }
+    fetchCategoriesWithStats();
+  };
 
   return (
     <View style={styles.container}>
       {/* Search bar */}
-      <SearchBar
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        placeholder="Search categories..."
-      />
+      <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="Search categories..." />
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -145,10 +134,7 @@ export default function CategoriesScreen() {
       ) : error ? (
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity
-            style={styles.retryButton}
-            onPress={fetchCategoriesWithStatsSync}
-          >
+          <TouchableOpacity style={styles.retryButton} onPress={fetchCategoriesWithStatsSync}>
             <Text style={styles.retryButtonText}>Retry</Text>
           </TouchableOpacity>
         </View>
@@ -160,11 +146,7 @@ export default function CategoriesScreen() {
               {(featuredCategories.length > 0 || !searchQuery) && (
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>Featured Categories</Text>
-                  <TouchableOpacity
-                    style={styles.addButton}
-                    onPress={() => setModalVisible(true)}
-                    disabled={isSaving}
-                  >
+                  <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)} disabled={isSaving}>
                     <FontAwesome name="plus" size={14} style={styles.addIcon} />
                     <Text style={styles.addButtonText}>Add</Text>
                   </TouchableOpacity>
@@ -174,9 +156,11 @@ export default function CategoriesScreen() {
               {/* Featured Categories Grid */}
               {featuredCategories.length > 0 ? (
                 <FlatList
-                  data={searchQuery ? featuredCategories.filter(
-                    c => c.name.toLowerCase().includes(searchQuery.toLowerCase())
-                  ) : featuredCategories}
+                  data={
+                    searchQuery
+                      ? featuredCategories.filter((c) => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
+                      : featuredCategories
+                  }
                   renderItem={renderFeaturedItem}
                   keyExtractor={(item) => item.id.toString()}
                   numColumns={numColumns}
@@ -209,10 +193,7 @@ export default function CategoriesScreen() {
               ) : (
                 <>
                   <Text style={styles.emptyText}>No categories found</Text>
-                  <TouchableOpacity
-                    style={styles.emptyButton}
-                    onPress={() => setModalVisible(true)}
-                  >
+                  <TouchableOpacity style={styles.emptyButton} onPress={() => setModalVisible(true)}>
                     <Text style={styles.emptyButtonText}>Create your first category</Text>
                   </TouchableOpacity>
                 </>
@@ -223,9 +204,7 @@ export default function CategoriesScreen() {
           renderItem={renderCategoryItem}
           keyExtractor={(item) => item.id.toString()}
           style={styles.list}
-          contentContainerStyle={
-            filteredCategories.length === 0 ? { flex: 1 } : styles.listContent
-          }
+          contentContainerStyle={filteredCategories.length === 0 ? { flex: 1 } : styles.listContent}
         />
       )}
 
@@ -339,4 +318,4 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '600',
   },
-}); 
+});

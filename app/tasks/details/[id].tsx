@@ -17,7 +17,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 
 // Import taskService and types
-import { taskService, TaskWithRelations, Subtask } from '@/services/taskService';
+import { taskService, TaskWithRelations } from '@/services/taskService';
 // Import TaskEditForm component
 import TaskEditForm from '@/components/TaskEditForm';
 
@@ -32,7 +32,6 @@ export default function TaskDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
@@ -68,18 +67,16 @@ export default function TaskDetailScreen() {
 
     try {
       // Find the current subtask
-      const subtask = task.subtasks?.find(st => st.id === subtaskId);
+      const subtask = task.subtasks?.find((st) => st.id === subtaskId);
       if (!subtask) return;
 
       // Optimistic UI update
-      setTask(prevTask => {
+      setTask((prevTask) => {
         if (!prevTask) return null;
 
         return {
           ...prevTask,
-          subtasks: prevTask.subtasks?.map(st =>
-            st.id === subtaskId ? { ...st, completed: !st.completed } : st
-          ),
+          subtasks: prevTask.subtasks?.map((st) => (st.id === subtaskId ? { ...st, completed: !st.completed } : st)),
         };
       });
 
@@ -115,30 +112,22 @@ export default function TaskDetailScreen() {
       // Handle subtasks updates
       if (updatedTask.subtasks) {
         // 分离子任务为已有的和新增的
-        const existingSubtasks = updatedTask.subtasks.filter(st => st.id !== null);
-        const newSubtasks = updatedTask.subtasks.filter(st => st.id === null);
+        const existingSubtasks = updatedTask.subtasks.filter((st) => st.id !== null);
+        const newSubtasks = updatedTask.subtasks.filter((st) => st.id === null);
 
         // 获取数据库中当前的子任务
-        const { data: currentSubtasks } = await supabase
-          .from('todo_subtasks')
-          .select('id')
-          .eq('task_id', task.id);
+        const { data: currentSubtasks } = await supabase.from('todo_subtasks').select('id').eq('task_id', task.id);
 
-        const currentSubtaskIds = Array.from(new Set(currentSubtasks?.map(st => st.id) || []));
-        const updatedSubtaskIds = Array.from(new Set(existingSubtasks.map(st => st.id)));
+        const currentSubtaskIds = Array.from(new Set(currentSubtasks?.map((st) => st.id) || []));
+        const updatedSubtaskIds = Array.from(new Set(existingSubtasks.map((st) => st.id)));
 
         // 找出要删除的子任务（在当前数据库中但不在更新列表中）
-        const subtasksIdsToDelete = currentSubtaskIds.filter(
-          id => !updatedSubtaskIds.includes(id)
-        ) || [];
+        const subtasksIdsToDelete = currentSubtaskIds.filter((id) => !updatedSubtaskIds.includes(id)) || [];
 
         // 删除子任务
         for (const subtaskId of subtasksIdsToDelete) {
           console.log('subtaskId: ', subtaskId);
-          await supabase
-            .from('todo_subtasks')
-            .delete()
-            .eq('id', subtaskId);
+          await supabase.from('todo_subtasks').delete().eq('id', subtaskId);
         }
 
         // 更新现有子任务
@@ -154,7 +143,7 @@ export default function TaskDetailScreen() {
 
         // 添加新子任务
         if (newSubtasks.length > 0) {
-          const newSubtasksData = newSubtasks.map(st => ({
+          const newSubtasksData = newSubtasks.map((st) => ({
             task_id: task.id,
             title: st.title,
             is_completed: st.completed,
@@ -180,34 +169,30 @@ export default function TaskDetailScreen() {
   const completeTask = async () => {
     if (!task) return;
 
-    Alert.alert(
-      'Complete Task',
-      'Are you sure you want to mark this task as complete?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Complete',
-          onPress: async () => {
-            setIsSaving(true);
-            try {
-              await taskService.updateTask({
-                id: task.id,
-                completed: true
-              });
+    Alert.alert('Complete Task', 'Are you sure you want to mark this task as complete?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Complete',
+        onPress: async () => {
+          setIsSaving(true);
+          try {
+            await taskService.updateTask({
+              id: task.id,
+              completed: true,
+            });
 
-              setTask(prevTask => prevTask ? { ...prevTask, completed: true } : null);
-              Alert.alert('Success', 'Task marked as complete');
-              setTimeout(() => router.back(), 1500);
-            } catch (err) {
-              console.error('Error completing task:', err);
-              Alert.alert('Error', 'Failed to complete task');
-            } finally {
-              setIsSaving(false);
-            }
-          },
+            setTask((prevTask) => (prevTask ? { ...prevTask, completed: true } : null));
+            Alert.alert('Success', 'Task marked as complete');
+            setTimeout(() => router.back(), 1500);
+          } catch (err) {
+            console.error('Error completing task:', err);
+            Alert.alert('Error', 'Failed to complete task');
+          } finally {
+            setIsSaving(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // Function to edit task
@@ -221,34 +206,30 @@ export default function TaskDetailScreen() {
   const deleteTask = () => {
     if (!task) return;
 
-    Alert.alert(
-      'Delete Task',
-      'Are you sure you want to delete this task? This action cannot be undone.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            setIsSaving(true);
-            try {
-              await taskService.deleteTask(task.id);
-              Alert.alert('Success', 'Task deleted successfully');
-              setTimeout(() => router.back(), 1500);
-            } catch (err) {
-              console.error('Error deleting task:', err);
-              Alert.alert('Error', 'Failed to delete task');
-            } finally {
-              setIsSaving(false);
-            }
-          },
+    Alert.alert('Delete Task', 'Are you sure you want to delete this task? This action cannot be undone.', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          setIsSaving(true);
+          try {
+            await taskService.deleteTask(task.id);
+            Alert.alert('Success', 'Task deleted successfully');
+            setTimeout(() => router.back(), 1500);
+          } catch (err) {
+            console.error('Error deleting task:', err);
+            Alert.alert('Error', 'Failed to delete task');
+          } finally {
+            setIsSaving(false);
+          }
         },
-      ]
-    );
+      },
+    ]);
   };
 
   // Calculate completed subtasks
-  const completedSubtasks = task?.subtasks?.filter(st => st.completed)?.length || 0;
+  const completedSubtasks = task?.subtasks?.filter((st) => st.completed)?.length || 0;
   const totalSubtasks = task?.subtasks?.length || 0;
 
   // Format date
@@ -311,10 +292,7 @@ export default function TaskDetailScreen() {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <Text style={styles.errorText}>Error: {error}</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => taskId && fetchTaskDetails(taskId.toString())}
-        >
+        <TouchableOpacity style={styles.retryButton} onPress={() => taskId && fetchTaskDetails(taskId.toString())}>
           <Text style={styles.retryButtonText}>Retry</Text>
         </TouchableOpacity>
       </View>
@@ -357,12 +335,7 @@ export default function TaskDetailScreen() {
         {/* Task Detail Card */}
         <View style={styles.detailCard}>
           {/* Priority Badge */}
-          <View
-            style={[
-              styles.priorityBadge,
-              { backgroundColor: priorityStyles.backgroundColor }
-            ]}
-          >
+          <View style={[styles.priorityBadge, { backgroundColor: priorityStyles.backgroundColor }]}>
             <Text style={[styles.priorityText, { color: priorityStyles.color }]}>
               {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
             </Text>
@@ -376,7 +349,8 @@ export default function TaskDetailScreen() {
             <View style={styles.metaItem}>
               <FontAwesome name="calendar" size={14} color="#007aff" style={styles.metaIcon} />
               <Text style={styles.metaText}>
-                {formatDate(task.date)}{task.time ? `, ${task.time}` : ''}
+                {formatDate(task.date)}
+                {task.time ? `, ${task.time}` : ''}
               </Text>
             </View>
           </View>
@@ -417,22 +391,10 @@ export default function TaskDetailScreen() {
                     style={styles.subtaskItem}
                     onPress={() => toggleSubtaskCompletion(subtask.id!)}
                   >
-                    <View
-                      style={[
-                        styles.subtaskCheckbox,
-                        subtask.completed && styles.subtaskCheckboxChecked
-                      ]}
-                    >
-                      {subtask.completed && (
-                        <FontAwesome name="check" size={12} color="#FFFFFF" />
-                      )}
+                    <View style={[styles.subtaskCheckbox, subtask.completed && styles.subtaskCheckboxChecked]}>
+                      {subtask.completed && <FontAwesome name="check" size={12} color="#FFFFFF" />}
                     </View>
-                    <Text
-                      style={[
-                        styles.subtaskTitle,
-                        subtask.completed && styles.subtaskTitleCompleted
-                      ]}
-                    >
+                    <Text style={[styles.subtaskTitle, subtask.completed && styles.subtaskTitleCompleted]}>
                       {subtask.title}
                     </Text>
                   </TouchableOpacity>
@@ -450,12 +412,11 @@ export default function TaskDetailScreen() {
                   <TouchableOpacity
                     key={attachment.id}
                     style={styles.attachment}
-                    onPress={() => Alert.alert('View Attachment', 'Attachment viewer will be available in a future update.')}
+                    onPress={() =>
+                      Alert.alert('View Attachment', 'Attachment viewer will be available in a future update.')
+                    }
                   >
-                    <Image
-                      source={{ uri: attachment.uri }}
-                      style={styles.attachmentImage}
-                    />
+                    <Image source={{ uri: attachment.uri }} style={styles.attachmentImage} />
                     <View style={styles.attachmentIcon}>
                       <FontAwesome name="eye" size={12} color="#FFFFFF" />
                     </View>

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   ScrollView,
   StatusBar,
   Platform,
-  Alert,
   ActivityIndicator,
   RefreshControl,
   TouchableOpacity,
@@ -25,13 +24,6 @@ import { useTasks } from '../../hooks/useTasks';
 import { useCategories } from '../../hooks/useCategories';
 import { taskService } from '../../services/taskService';
 
-// Default quick action buttons
-const DEFAULT_QUICK_ACTIONS = [
-  { id: 'all', label: '全部', icon: 'list', color: 'blue' },
-  { id: 'today', label: '今天', icon: 'calendar', color: 'green' },
-  { id: 'upcoming', label: '即将到来', icon: 'clock-o', color: 'orange' },
-];
-
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const [searchQuery, setSearchQuery] = useState('');
@@ -45,7 +37,6 @@ export default function HomeScreen() {
     todayTasks,
     upcomingTasks,
     completedTasks,
-    filteredTasks,
     allTasks,
     isLoading: isTasksLoading,
     error: tasksError,
@@ -53,12 +44,7 @@ export default function HomeScreen() {
   } = useTasks();
 
   // Use our categories hook to fetch categories from Supabase
-  const {
-    featuredCategories,
-    isLoading: isCategoriesLoading,
-    error: categoriesError,
-    refetch: refetchCategories,
-  } = useCategories();
+  const { isLoading: isCategoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories();
 
   // Combined loading and error states
   const isLoading = isTasksLoading || isCategoriesLoading;
@@ -68,28 +54,13 @@ export default function HomeScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([
-        refetchTasks(),
-        refetchCategories(),
-      ]);
+      await Promise.all([refetchTasks(), refetchCategories()]);
     } catch (err) {
       console.error('Refresh error:', err);
     } finally {
       setRefreshing(false);
     }
   };
-
-  // Combine default quick actions with featured categories
-  const quickActionButtons = useMemo(() => {
-    const categoryButtons = featuredCategories.map(category => ({
-      id: category.id.toString(),
-      label: category.name,
-      color: category.color,
-      icon: category.icon,
-    }));
-
-    return [...DEFAULT_QUICK_ACTIONS, ...categoryButtons];
-  }, [featuredCategories]);
 
   // Handle search functionality
   useEffect(() => {
@@ -104,12 +75,13 @@ export default function HomeScreen() {
 
     // Filter all tasks based on the search query
     const query = searchQuery.toLowerCase().trim();
-    const filtered = allTasks.filter(task =>
-      task.title.toLowerCase().includes(query) ||
-      (task.description && task.description.toLowerCase().includes(query))
+    const filtered = allTasks.filter(
+      (task) =>
+        task.title.toLowerCase().includes(query) || (task.description && task.description.toLowerCase().includes(query))
     );
 
     setSearchResults(filtered);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchQuery]);
 
   const handleTaskPress = (taskId: string) => {
@@ -127,11 +99,15 @@ export default function HomeScreen() {
       pathname: '/tasks',
       params: {
         filter: sectionType,
-        title: sectionType === 'today' ? '今天的任务' :
-          sectionType === 'upcoming' ? '即将到来的任务' :
-            sectionType === 'completed' ? '已完成的任务' :
-              '搜索结果'
-      }
+        title:
+          sectionType === 'today'
+            ? '今天的任务'
+            : sectionType === 'upcoming'
+            ? '即将到来的任务'
+            : sectionType === 'completed'
+            ? '已完成的任务'
+            : '搜索结果',
+      },
     });
   };
 
@@ -161,11 +137,7 @@ export default function HomeScreen() {
         <Text style={styles.header}>今天</Text>
 
         {/* Search Bar */}
-        <SearchBar
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          placeholder="搜索任务..."
-        />
+        <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="搜索任务..." />
 
         {/* Filter Buttons */}
         <ScrollView
@@ -207,9 +179,7 @@ export default function HomeScreen() {
         {/* Error State */}
         {error && (
           <View style={styles.errorContainer}>
-            <Text style={styles.errorText}>
-              {error}。下拉刷新。
-            </Text>
+            <Text style={styles.errorText}>{error}。下拉刷新。</Text>
           </View>
         )}
 
@@ -245,30 +215,26 @@ export default function HomeScreen() {
 
         {/* Today's Tasks Section - Hide when searching */}
         {!isSearching && !isLoading && !error && (
-          <TaskSection
-            title="今天的任务"
-            onSeeAll={() => handleSeeAllPress('today')}
-          >
+          <TaskSection title="今天的任务" onSeeAll={() => handleSeeAllPress('today')}>
             {todayTasks.length === 0 ? (
               <Text style={styles.emptyStateText}>今天没有安排任务</Text>
             ) : (
               // 只显示最近的3个今天的任务
-              todayTasks.slice(0, 3).map((task) => (
-                <TaskItem
-                  key={task.id?.toString()}
-                  id={task.id?.toString() || ''}
-                  title={task.title}
-                  priority={task.priority}
-                  time={taskService.formatTaskTime(task)}
-                  onPress={handleTaskPress}
-                />
-              ))
+              todayTasks
+                .slice(0, 3)
+                .map((task) => (
+                  <TaskItem
+                    key={task.id?.toString()}
+                    id={task.id?.toString() || ''}
+                    title={task.title}
+                    priority={task.priority}
+                    time={taskService.formatTaskTime(task)}
+                    onPress={handleTaskPress}
+                  />
+                ))
             )}
             {todayTasks.length > 3 && (
-              <TouchableOpacity
-                style={styles.moreButton}
-                onPress={() => handleSeeAllPress('today')}
-              >
+              <TouchableOpacity style={styles.moreButton} onPress={() => handleSeeAllPress('today')}>
                 <Text style={styles.moreButtonText}>查看全部 {todayTasks.length} 个任务</Text>
               </TouchableOpacity>
             )}
@@ -277,30 +243,26 @@ export default function HomeScreen() {
 
         {/* Upcoming Tasks Section - Hide when searching */}
         {!isSearching && !isLoading && !error && (
-          <TaskSection
-            title="即将到来"
-            onSeeAll={() => handleSeeAllPress('upcoming')}
-          >
+          <TaskSection title="即将到来" onSeeAll={() => handleSeeAllPress('upcoming')}>
             {upcomingTasks.length === 0 ? (
               <Text style={styles.emptyStateText}>没有即将到来的任务</Text>
             ) : (
               // 只显示最近的3个即将到来的任务
-              upcomingTasks.slice(0, 3).map((task) => (
-                <TaskItem
-                  key={task.id?.toString()}
-                  id={task.id?.toString() || ''}
-                  title={task.title}
-                  priority={task.priority}
-                  time={taskService.formatTaskTime(task)}
-                  onPress={handleTaskPress}
-                />
-              ))
+              upcomingTasks
+                .slice(0, 3)
+                .map((task) => (
+                  <TaskItem
+                    key={task.id?.toString()}
+                    id={task.id?.toString() || ''}
+                    title={task.title}
+                    priority={task.priority}
+                    time={taskService.formatTaskTime(task)}
+                    onPress={handleTaskPress}
+                  />
+                ))
             )}
             {upcomingTasks.length > 3 && (
-              <TouchableOpacity
-                style={styles.moreButton}
-                onPress={() => handleSeeAllPress('upcoming')}
-              >
+              <TouchableOpacity style={styles.moreButton} onPress={() => handleSeeAllPress('upcoming')}>
                 <Text style={styles.moreButtonText}>查看全部 {upcomingTasks.length} 个任务</Text>
               </TouchableOpacity>
             )}
@@ -309,30 +271,26 @@ export default function HomeScreen() {
 
         {/* Completed Tasks Section - Hide when searching */}
         {!isSearching && !isLoading && !error && (
-          <TaskSection
-            title="已完成"
-            onSeeAll={() => handleSeeAllPress('completed')}
-          >
+          <TaskSection title="已完成" onSeeAll={() => handleSeeAllPress('completed')}>
             {completedTasks.length === 0 ? (
               <Text style={styles.emptyStateText}>暂无已完成的任务</Text>
             ) : (
               // 只显示最近的3个已完成任务
-              completedTasks.slice(0, 3).map((task) => (
-                <TaskItem
-                  key={task.id?.toString()}
-                  id={task.id?.toString() || ''}
-                  title={task.title}
-                  priority={task.priority}
-                  time={taskService.formatTaskTime(task)}
-                  onPress={handleTaskPress}
-                />
-              ))
+              completedTasks
+                .slice(0, 3)
+                .map((task) => (
+                  <TaskItem
+                    key={task.id?.toString()}
+                    id={task.id?.toString() || ''}
+                    title={task.title}
+                    priority={task.priority}
+                    time={taskService.formatTaskTime(task)}
+                    onPress={handleTaskPress}
+                  />
+                ))
             )}
             {completedTasks.length > 3 && (
-              <TouchableOpacity
-                style={styles.moreButton}
-                onPress={() => handleSeeAllPress('completed')}
-              >
+              <TouchableOpacity style={styles.moreButton} onPress={() => handleSeeAllPress('completed')}>
                 <Text style={styles.moreButtonText}>查看全部 {completedTasks.length} 个任务</Text>
               </TouchableOpacity>
             )}
@@ -402,4 +360,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-}); 
+});

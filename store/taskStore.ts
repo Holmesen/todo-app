@@ -73,8 +73,6 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       // Get user ID from auth store
       const { user } = useAuthStore.getState();
 
-      // Determine user ID based on auth method
-      let userId: number;
       if (!user?.id) {
         throw new Error('User not authenticated');
       }

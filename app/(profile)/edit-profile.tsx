@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/authStore';
@@ -75,7 +75,7 @@ export default function EditProfileScreen() {
     username: '',
     email: '',
     full_name: '',
-    profile_image: '',
+    profile_image: 'https://ui-avatars.com/api/',
     time_zone: 'UTC+0',
     theme: 'light',
   });
@@ -104,9 +104,9 @@ export default function EditProfileScreen() {
 
   // Form field change handler
   const handleChange = (field: keyof UserData, value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: value
+      [field]: value,
     }));
   };
 
@@ -121,7 +121,7 @@ export default function EditProfileScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        mediaTypes: ['images'],
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
@@ -130,9 +130,9 @@ export default function EditProfileScreen() {
 
       if (!result.canceled && result.assets && result.assets[0]) {
         const selectedAsset = result.assets[0];
-        setFormData(prev => ({
+        setFormData((prev) => ({
           ...prev,
-          profile_image: selectedAsset.uri
+          profile_image: selectedAsset.uri,
         }));
         setImageChanged(true);
       }
@@ -164,18 +164,14 @@ export default function EditProfileScreen() {
       const base64Image = await uriToBase64(uri);
       const contentType = 'image/jpeg';
 
-      const { data: fileData, error } = await supabase.storage
-        .from('todo.images')
-        .upload(fileName, decode(base64Image), {
-          contentType,
-          upsert: true,
-        });
+      const { error } = await supabase.storage.from('todo.images').upload(fileName, decode(base64Image), {
+        contentType,
+        upsert: true,
+      });
 
       if (error) throw error;
 
-      const { data: publicUrlData } = supabase.storage
-        .from('todo.images')
-        .getPublicUrl(fileName);
+      const { data: publicUrlData } = supabase.storage.from('todo.images').getPublicUrl(fileName);
 
       return publicUrlData.publicUrl;
     } catch (error) {
@@ -219,25 +215,20 @@ export default function EditProfileScreen() {
         profile_image: profileImageUrl,
         time_zone: formData.time_zone,
         theme: formData.theme,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from('todo_users')
-        .update(updateData)
-        .eq('id', user.id);
+      const { error } = await supabase.from('todo_users').update(updateData).eq('id', user.id);
 
       if (error) throw error;
 
       // Update local user state
       updateUser({
         ...user,
-        ...updateData
+        ...updateData,
       });
 
-      Alert.alert('成功', '个人资料已更新。', [
-        { text: '确定', onPress: () => router.back() }
-      ]);
+      Alert.alert('成功', '个人资料已更新。', [{ text: '确定', onPress: () => router.back() }]);
     } catch (error) {
       console.error('更新个人资料时出错:', error);
       Alert.alert('错误', '更新个人资料时发生错误，请稍后重试。');
@@ -247,10 +238,7 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-    >
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
@@ -258,11 +246,7 @@ export default function EditProfileScreen() {
             <FontAwesome name="arrow-left" size={20} color="#007aff" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>编辑个人资料</Text>
-          <TouchableOpacity
-            onPress={handleSubmit}
-            style={styles.saveButton}
-            disabled={isSaving}
-          >
+          <TouchableOpacity onPress={handleSubmit} style={styles.saveButton} disabled={isSaving}>
             {isSaving ? (
               <ActivityIndicator size="small" color="#ffffff" />
             ) : (
@@ -273,10 +257,7 @@ export default function EditProfileScreen() {
 
         {/* Profile Image */}
         <View style={styles.imageContainer}>
-          <Image
-            source={{ uri: formData.profile_image }}
-            style={styles.profileImage}
-          />
+          <Image source={{ uri: formData.profile_image }} style={styles.profileImage} />
           <TouchableOpacity onPress={handlePickImage} style={styles.editImageButton}>
             <FontAwesome name="camera" size={16} color="#ffffff" />
           </TouchableOpacity>
@@ -323,14 +304,11 @@ export default function EditProfileScreen() {
           {/* Time Zone */}
           <View style={styles.formField}>
             <Text style={styles.label}>时区</Text>
-            <TouchableOpacity
-              style={styles.pickerButton}
-              onPress={() => setShowTimeZonePicker(!showTimeZonePicker)}
-            >
+            <TouchableOpacity style={styles.pickerButton} onPress={() => setShowTimeZonePicker(!showTimeZonePicker)}>
               <Text style={styles.pickerButtonText}>
-                {timeZoneOptions.find(tz => tz.value === formData.time_zone)?.label || formData.time_zone}
+                {timeZoneOptions.find((tz) => tz.value === formData.time_zone)?.label || formData.time_zone}
               </Text>
-              <FontAwesome name={showTimeZonePicker ? "chevron-up" : "chevron-down"} size={14} color="#8e8e93" />
+              <FontAwesome name={showTimeZonePicker ? 'chevron-up' : 'chevron-down'} size={14} color="#8e8e93" />
             </TouchableOpacity>
 
             {showTimeZonePicker && (
@@ -354,14 +332,11 @@ export default function EditProfileScreen() {
           {/* Theme */}
           <View style={styles.formField}>
             <Text style={styles.label}>主题</Text>
-            <TouchableOpacity
-              style={styles.pickerButton}
-              onPress={() => setShowThemePicker(!showThemePicker)}
-            >
+            <TouchableOpacity style={styles.pickerButton} onPress={() => setShowThemePicker(!showThemePicker)}>
               <Text style={styles.pickerButtonText}>
-                {themeOptions.find(t => t.value === formData.theme)?.label || '浅色'}
+                {themeOptions.find((t) => t.value === formData.theme)?.label || '浅色'}
               </Text>
-              <FontAwesome name={showThemePicker ? "chevron-up" : "chevron-down"} size={14} color="#8e8e93" />
+              <FontAwesome name={showThemePicker ? 'chevron-up' : 'chevron-down'} size={14} color="#8e8e93" />
             </TouchableOpacity>
 
             {showThemePicker && (
@@ -494,4 +469,4 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 20,
   },
-}); 
+});

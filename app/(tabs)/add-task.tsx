@@ -37,13 +37,7 @@ interface ButtonProps {
   disabled?: boolean;
 }
 
-function Button({
-  title,
-  onPress,
-  variant = 'primary',
-  loading = false,
-  disabled = false
-}: ButtonProps) {
+function Button({ title, onPress, variant = 'primary', loading = false, disabled = false }: ButtonProps) {
   const isPrimary = variant === 'primary';
 
   return (
@@ -74,15 +68,15 @@ function Button({
 }
 
 type CategoryOptions = {
-  label: string
-  value: string
-  color: string
-}
+  label: string;
+  value: string;
+  color: string;
+};
 
 export default function AddTaskScreen() {
   const insets = useSafeAreaInsets();
 
-  const [categoryOptions, setCategoryOptions] = useState<CategoryOptions[]>([])
+  const [categoryOptions, setCategoryOptions] = useState<CategoryOptions[]>([]);
 
   // 使用自定义表单钩子
   const {
@@ -105,17 +99,20 @@ export default function AddTaskScreen() {
   useEffect(() => {
     // 每次进入 add-task 页面时，确保从 store 获取最新的类别数据
     fetchCategories();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     // 格式化分类数据供选择器使用
-    setCategoryOptions(categories.map(category => ({
-      label: category.name,
-      value: category.id?.toString() || '',
-      // 可以添加颜色信息用于UI展示
-      color: category.color,
-    })))
-  }, [categories])
+    setCategoryOptions(
+      categories.map((category) => ({
+        label: category.name,
+        value: category.id?.toString() || '',
+        // 可以添加颜色信息用于UI展示
+        color: category.color,
+      }))
+    );
+  }, [categories]);
 
   // 保存并返回上一页
   const handleSave = async () => {
@@ -145,10 +142,7 @@ export default function AddTaskScreen() {
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardAvoidingView}
-      >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.keyboardAvoidingView}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={{
@@ -332,4 +326,4 @@ const styles = StyleSheet.create({
   disabledButtonText: {
     color: '#FFFFFF',
   },
-}); 
+});

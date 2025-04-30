@@ -10,7 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -72,6 +72,7 @@ const RegisterScreen = () => {
     } catch (e) {
       // 这里不需要处理错误，因为错误已经存储在 authStore 的 error 状态中，
       // 会由上面的 useEffect 处理
+      console.error(e);
     }
   };
 
@@ -83,15 +84,8 @@ const RegisterScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          style={styles.contentArea}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <ScrollView style={styles.contentArea} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {/* 顶部导航 */}
           <View style={styles.navHeader}>
             <TouchableOpacity style={styles.backButton} onPress={navigateToLogin} disabled={isLoading}>
@@ -170,9 +164,7 @@ const RegisterScreen = () => {
 
             <Text style={styles.termsPrivacy}>
               点击"注册"按钮，表示您同意我们的
-              <Text style={styles.termsLink}> 服务条款 </Text>
-              和
-              <Text style={styles.termsLink}> 隐私政策 </Text>
+              <Text style={styles.termsLink}> 服务条款 </Text>和<Text style={styles.termsLink}> 隐私政策 </Text>
             </Text>
 
             <TouchableOpacity
@@ -189,11 +181,7 @@ const RegisterScreen = () => {
           </View>
 
           {/* Login Prompt */}
-          <TouchableOpacity
-            style={styles.loginPrompt}
-            onPress={navigateToLogin}
-            disabled={isLoading}
-          >
+          <TouchableOpacity style={styles.loginPrompt} onPress={navigateToLogin} disabled={isLoading}>
             <Text style={styles.loginPromptText}>
               已有账号? <Text style={styles.loginLink}>立即登录</Text>
             </Text>
@@ -316,4 +304,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default RegisterScreen; 
+export default RegisterScreen;

@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { router } from 'expo-router';
 
 interface TaskItemProps {
   id: string;
@@ -155,4 +154,4 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#8e8e93',
   },
-}); 
+});

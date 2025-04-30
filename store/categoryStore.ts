@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { Category, categoryService } from '../services/categoryService';
 import { useAuthStore } from './authStore';
-import { Task, taskService, TaskStatus } from '../services/taskService';
+import { taskService, TaskStatus } from '../services/taskService';
 
 // Define category with stats
 export interface CategoryWithStats extends Category {

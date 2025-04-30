@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { supabase } from '../lib/supabase';
 import { userAuthService } from '../services/userAuthService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 

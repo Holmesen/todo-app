@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,10 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Switch,
   Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -39,10 +38,10 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
   const [date, setDate] = useState(task.date);
   const [time, setTime] = useState(task.time ? new Date(`2000-01-01T${task.time}`) : null);
   const [subtasks, setSubtasks] = useState<SubtaskInput[]>(
-    task.subtasks?.map(st => ({
+    task.subtasks?.map((st) => ({
       id: st.id,
       title: st.title,
-      completed: st.completed
+      completed: st.completed,
     })) || []
   );
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -74,23 +73,19 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
       id: null, // 新子任务没有ID，数据库会自动分配
       title: '',
       completed: false,
-      isNew: true
+      isNew: true,
     };
     setSubtasks([...subtasks, newSubtask]);
   };
 
   // Update subtask title
   const updateSubtaskTitle = (index: number, newTitle: string) => {
-    setSubtasks(
-      subtasks.map((st, idx) => (idx === index ? { ...st, title: newTitle } : st))
-    );
+    setSubtasks(subtasks.map((st, idx) => (idx === index ? { ...st, title: newTitle } : st)));
   };
 
   // Toggle subtask completion
   const toggleSubtaskCompletion = (index: number) => {
-    setSubtasks(
-      subtasks.map((st, idx) => (idx === index ? { ...st, completed: !st.completed } : st))
-    );
+    setSubtasks(subtasks.map((st, idx) => (idx === index ? { ...st, completed: !st.completed } : st)));
   };
 
   // Remove subtask
@@ -106,7 +101,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
       errors.title = 'Title is required';
     }
 
-    const hasEmptySubtasks = subtasks.some(st => !st.title.trim());
+    const hasEmptySubtasks = subtasks.some((st) => !st.title.trim());
     if (hasEmptySubtasks) {
       errors.subtasks = 'All subtasks must have a title';
     }
@@ -127,8 +122,8 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
     const timeString = time ? format(time, 'HH:mm:ss') : null;
 
     // 将子任务分为已有的和新增的
-    const existingSubtasks = subtasks.filter(st => st.id !== null && !st.isNew);
-    const newSubtasks = subtasks.filter(st => st.isNew || st.id === null);
+    const existingSubtasks = subtasks.filter((st) => st.id !== null && !st.isNew);
+    const newSubtasks = subtasks.filter((st) => st.isNew || st.id === null);
 
     // Create updated task object
     const updatedTask: Partial<TaskWithRelations> = {
@@ -140,20 +135,20 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
       time: timeString,
       subtasks: [
         // 已有子任务保留ID
-        ...existingSubtasks.map(st => ({
+        ...existingSubtasks.map((st) => ({
           id: st.id!,
           title: st.title,
           completed: st.completed,
-          task_id: task.id
+          task_id: task.id,
         })),
         // 新子任务不传ID
-        ...newSubtasks.map(st => ({
+        ...newSubtasks.map((st) => ({
           id: null,
           title: st.title,
           completed: st.completed,
-          task_id: task.id
-        }))
-      ]
+          task_id: task.id,
+        })),
+      ],
     };
 
     try {
@@ -176,25 +171,20 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
         <View style={styles.formGroup}>
           <Text style={styles.label}>Title</Text>
           <TextInput
             style={[styles.input, formErrors.title ? styles.inputError : null]}
             value={title}
-            onChangeText={text => {
+            onChangeText={(text) => {
               setTitle(text);
               validateForm();
             }}
             placeholder="Task title"
           />
-          {formErrors.title ? (
-            <Text style={styles.errorText}>{formErrors.title}</Text>
-          ) : null}
+          {formErrors.title ? <Text style={styles.errorText}>{formErrors.title}</Text> : null}
         </View>
 
         <View style={styles.formGroup}>
@@ -226,39 +216,21 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Due Date</Text>
-          <TouchableOpacity
-            style={styles.dateTimeButton}
-            onPress={() => setShowDatePicker(true)}
-          >
+          <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowDatePicker(true)}>
             <FontAwesome name="calendar" size={18} color="#007aff" style={styles.dateTimeIcon} />
             <Text style={styles.dateTimeText}>{formatDate(date)}</Text>
           </TouchableOpacity>
-          {showDatePicker && (
-            <DateTimePicker
-              value={date}
-              mode="date"
-              display="default"
-              onChange={onDateChange}
-            />
-          )}
+          {showDatePicker && <DateTimePicker value={date} mode="date" display="default" onChange={onDateChange} />}
         </View>
 
         <View style={styles.formGroup}>
           <Text style={styles.label}>Due Time (Optional)</Text>
-          <TouchableOpacity
-            style={styles.dateTimeButton}
-            onPress={() => setShowTimePicker(true)}
-          >
+          <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowTimePicker(true)}>
             <FontAwesome name="clock-o" size={18} color="#007aff" style={styles.dateTimeIcon} />
             <Text style={styles.dateTimeText}>{time ? formatTime(time) : 'Set time'}</Text>
           </TouchableOpacity>
           {showTimePicker && (
-            <DateTimePicker
-              value={time || new Date()}
-              mode="time"
-              display="default"
-              onChange={onTimeChange}
-            />
+            <DateTimePicker value={time || new Date()} mode="time" display="default" onChange={onTimeChange} />
           )}
         </View>
 
@@ -270,30 +242,20 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
               <Text style={styles.addSubtaskText}>Add Subtask</Text>
             </TouchableOpacity>
           </View>
-          {formErrors.subtasks ? (
-            <Text style={styles.errorText}>{formErrors.subtasks}</Text>
-          ) : null}
+          {formErrors.subtasks ? <Text style={styles.errorText}>{formErrors.subtasks}</Text> : null}
           <View style={styles.subtasksList}>
             {subtasks.map((subtask, index) => (
               <View key={index} style={styles.subtaskItem}>
-                <TouchableOpacity
-                  style={styles.subtaskCheckbox}
-                  onPress={() => toggleSubtaskCompletion(index)}
-                >
-                  {subtask.completed ? (
-                    <FontAwesome name="check" size={16} color="#007aff" />
-                  ) : null}
+                <TouchableOpacity style={styles.subtaskCheckbox} onPress={() => toggleSubtaskCompletion(index)}>
+                  {subtask.completed ? <FontAwesome name="check" size={16} color="#007aff" /> : null}
                 </TouchableOpacity>
                 <TextInput
                   style={styles.subtaskInput}
                   value={subtask.title}
-                  onChangeText={text => updateSubtaskTitle(index, text)}
+                  onChangeText={(text) => updateSubtaskTitle(index, text)}
                   placeholder="Subtask title"
                 />
-                <TouchableOpacity
-                  style={styles.subtaskRemoveButton}
-                  onPress={() => removeSubtask(index)}
-                >
+                <TouchableOpacity style={styles.subtaskRemoveButton} onPress={() => removeSubtask(index)}>
                   <FontAwesome name="trash" size={16} color="#FF3B30" />
                 </TouchableOpacity>
               </View>
@@ -302,11 +264,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
         </View>
 
         <View style={styles.formActions}>
-          <TouchableOpacity
-            style={[styles.button, styles.cancelButton]}
-            onPress={onCancel}
-            disabled={isSaving}
-          >
+          <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onCancel} disabled={isSaving}>
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -479,4 +437,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default TaskEditForm; 
+export default TaskEditForm;

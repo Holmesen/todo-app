@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import { Task, TaskSchema } from '../services/taskService';
-import { format, addDays } from 'date-fns';
+import { Task } from '../services/taskService';
 import { useAuthStore } from 'store/authStore';
 
 interface UseTasksReturn {
@@ -88,6 +87,7 @@ export function useTasks(): UseTasksReturn {
     } finally {
       setIsLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filter tasks based on active filter
