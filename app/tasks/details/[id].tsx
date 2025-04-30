@@ -101,6 +101,7 @@ export default function TaskDetailScreen() {
         id: updatedTask.id!,
         title: updatedTask.title!,
         description: updatedTask.description,
+        category_id: updatedTask.category_id,
         priority: updatedTask.priority!,
         date: updatedTask.date!,
         time: updatedTask.time || null,
