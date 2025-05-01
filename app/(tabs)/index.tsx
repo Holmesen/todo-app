@@ -134,7 +134,14 @@ export default function HomeScreen() {
           />
         }
       >
-        <Text style={styles.header}>今天</Text>
+        <Text
+          style={styles.header}
+          onPress={() => {
+            router.push('/screens');
+          }}
+        >
+          今天
+        </Text>
 
         {/* Search Bar */}
         <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="搜索任务..." />

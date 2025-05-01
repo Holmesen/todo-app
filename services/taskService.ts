@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import { PostgrestError } from '@supabase/supabase-js';
 import { formatISO, startOfDay, endOfDay, addDays, parseISO } from 'date-fns';
 import { z } from 'zod';
+import { setupTaskReminder, deleteTaskReminders } from '../lib/notifications';
 
 // Enum types from database schema
 export type TaskPriority = 'low' | 'medium' | 'high';
@@ -238,9 +239,15 @@ class TaskService {
         });
 
         if (reminderError) throw reminderError;
+
+        // 4. 设置提醒通知
+        const reminderType = input.reminder.reminder_type;
+        if (reminderType !== 'none') {
+          await setupTaskReminder(taskId, taskData.title, taskData.due_date, taskData.due_time, reminderType);
+        }
       }
 
-      // 4. Log activity
+      // 5. Log activity
       await supabase.from('todo_activity_logs').insert({
         user_id: input.task.user_id,
         task_id: taskId,
@@ -546,6 +553,27 @@ class TaskService {
 
       if (error) throw error;
 
+      // 如果更新了日期、时间，更新相关的提醒
+      if (task.date || task.time) {
+        // 获取任务的提醒类型
+        const { data: reminderData } = await supabase
+          .from('todo_reminders')
+          .select('reminder_type')
+          .eq('task_id', task.id)
+          .maybeSingle();
+
+        if (reminderData && reminderData.reminder_type) {
+          // 更新提醒
+          await setupTaskReminder(task.id, data.title, data.due_date, data.due_time, reminderData.reminder_type);
+        }
+      }
+
+      // 处理完成状态变化
+      if (task.completed) {
+        // 如果任务标记为完成，删除相关的提醒
+        await deleteTaskReminders(task.id);
+      }
+
       // Transform back to app format
       return {
         id: data.id.toString(),
@@ -572,8 +600,10 @@ class TaskService {
    */
   async deleteTask(taskId: string): Promise<void> {
     try {
-      // In Supabase, if you've set up RLS and foreign key constraints with CASCADE,
-      // this will automatically delete related subtasks and attachments
+      // 删除与任务相关的提醒通知
+      await deleteTaskReminders(taskId);
+
+      // 删除任务
       const { error } = await supabase.from('todo_tasks').delete().eq('id', taskId);
 
       if (error) throw error;

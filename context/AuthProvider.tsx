@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, ReactNode, useState } from
 import { View, ActivityIndicator } from 'react-native';
 import { useRouter, useSegments } from 'expo-router';
 import { useAuthStore } from '../store/authStore';
+import { syncUserReminders } from '../lib/notifications';
 
 // 创建认证上下文
 interface AuthContextType {
@@ -20,13 +21,10 @@ export const useAuth = () => {
 };
 
 // 定义需要认证的路由组
-const protectedRoutes = ['(tabs)', 'tasks'];
+const protectedRoutes = ['(tabs)', '(profile)', 'tasks'];
 
 // 认证屏幕路径
-const authScreenPaths = [
-  '/screens/LoginScreen',
-  '/screens/RegisterScreen'
-];
+const authScreenPaths = ['/screens/LoginScreen', '/screens/RegisterScreen'];
 
 // 检查当前路由是否受保护
 function useProtectedRoute(isAuthenticated: boolean) {
@@ -45,7 +43,7 @@ function useProtectedRoute(isAuthenticated: boolean) {
 
     // 检查当前路径是否为认证屏幕
     const currentPath = '/' + segments.join('/');
-    const inAuthScreen = authScreenPaths.some(path => currentPath.startsWith(path));
+    const inAuthScreen = authScreenPaths.some((path) => currentPath.startsWith(path));
 
     // 如果用户没有登录且路由受保护，则重定向到登录页面
     if (!isAuthenticated && inProtectedRoute) {
@@ -59,12 +57,7 @@ function useProtectedRoute(isAuthenticated: boolean) {
 
 // 认证提供者组件
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const {
-    user,
-    initialize,
-    signOut,
-    isLoading
-  } = useAuthStore();
+  const { user, initialize, signOut, isLoading } = useAuthStore();
 
   // 判断用户是否已认证
   const isAuthenticated = !!user;
@@ -73,6 +66,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     initialize();
   }, [initialize]);
+
+  // 当用户登录状态变化时，同步提醒通知
+  useEffect(() => {
+    const syncReminders = async () => {
+      if (user) {
+        // 同步用户的提醒通知
+        await syncUserReminders(String(user.id));
+        console.log('已同步用户提醒通知');
+      }
+    };
+
+    syncReminders();
+  }, [user]);
 
   // 使用保护路由逻辑
   useProtectedRoute(isAuthenticated);
@@ -86,9 +92,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
   }
 
-  return (
-    <AuthContext.Provider value={{ signOut }}>
-      {children}
-    </AuthContext.Provider>
-  );
-} 
+  return <AuthContext.Provider value={{ signOut }}>{children}</AuthContext.Provider>;
+}
