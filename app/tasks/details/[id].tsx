@@ -90,8 +90,46 @@ export default function TaskDetailScreen() {
     }
   };
 
+  // 计算提醒时间
+  const computedReminderTime = (task: Partial<TaskWithRelations>) => {
+    let reminderTime: Date | null = null;
+    const taskDate = new Date(task.date!);
+
+    if (task.time) {
+      // 如果有具体时间，基于任务日期和时间计算
+      const timeComponents = task.time.split(':');
+      taskDate.setHours(parseInt(timeComponents[0], 10));
+      taskDate.setMinutes(parseInt(timeComponents[1], 10));
+      taskDate.setSeconds(parseInt(timeComponents[2], 10));
+
+      switch (task.reminder) {
+        case 'at_time':
+          reminderTime = taskDate;
+          break;
+        case '5_min_before':
+          reminderTime = new Date(taskDate.getTime() - 5 * 60 * 1000);
+          break;
+        case '15_min_before':
+          reminderTime = new Date(taskDate.getTime() - 15 * 60 * 1000);
+          break;
+        case '30_min_before':
+          reminderTime = new Date(taskDate.getTime() - 30 * 60 * 1000);
+          break;
+        case '1_hour_before':
+          reminderTime = new Date(taskDate.getTime() - 60 * 60 * 1000);
+          break;
+        case '1_day_before':
+          reminderTime = new Date(taskDate.getTime() - 24 * 60 * 60 * 1000);
+          break;
+      }
+    }
+
+    return reminderTime;
+  };
+
   // Function to save task edits
   const saveTaskEdits = async (updatedTask: Partial<TaskWithRelations>) => {
+    console.log('updatedTask: ', updatedTask);
     if (!task) return;
 
     setIsSaving(true);
@@ -105,10 +143,39 @@ export default function TaskDetailScreen() {
         priority: updatedTask.priority!,
         date: updatedTask.date!,
         time: updatedTask.time || null,
+        reminder: computedReminderTime(updatedTask)?.toISOString() || null,
       };
 
       // Update task in Supabase
       await taskService.updateTask(baseUpdateData);
+
+      // 更新 reminder 表，如果"reminder"字段有值的话
+      if (updatedTask.reminder && updatedTask.reminder !== 'none') {
+        // 先删除该任务的所有现有提醒
+        await supabase.from('todo_reminders').delete().eq('task_id', task.id);
+
+        // 计算提醒时间
+        let reminderTime: Date | null = null;
+
+        if (updatedTask.time) {
+          // 如果有具体时间，基于任务日期和时间计算
+          reminderTime = computedReminderTime(updatedTask);
+          console.log('reminderTime---', reminderTime);
+
+          // 创建新的提醒记录
+          if (reminderTime) {
+            await supabase.from('todo_reminders').insert({
+              task_id: task.id,
+              reminder_type: updatedTask.reminder,
+              reminder_time: reminderTime.toISOString(),
+              is_sent: false,
+            });
+          }
+        }
+      } else {
+        // 如果没有提醒或提醒设为"none"，删除所有相关提醒
+        await supabase.from('todo_reminders').delete().eq('task_id', task.id);
+      }
 
       // Handle subtasks updates
       if (updatedTask.subtasks) {

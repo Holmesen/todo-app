@@ -122,7 +122,6 @@ export async function setupTaskReminder(
 
     // 计算提醒时间
     const reminderTime = calculateReminderTime(dueDate, dueTime, reminderType);
-    console.log('reminderTime: ', reminderTime);
     if (!reminderTime) return null;
 
     // 检查是否已经存在相同任务的提醒

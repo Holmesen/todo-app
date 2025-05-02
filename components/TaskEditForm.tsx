@@ -15,7 +15,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { format } from 'date-fns';
 import { Picker } from '@react-native-picker/picker';
-import { TaskWithRelations } from '@/services/taskService';
+import { ReminderType, TaskWithRelations } from '@/services/taskService';
 import { useAddTaskForm } from '@/hooks/useAddTaskForm';
 
 interface SubtaskInput {
@@ -45,6 +45,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
   const [categoryId, setCategoryId] = useState<number | string | null>(task.category_id);
   const [date, setDate] = useState(task.date);
   const [time, setTime] = useState(task.time ? new Date(`2000-01-01T${task.time}`) : null);
+  const [reminder, setReminder] = useState(task.reminder || 'none');
   const [subtasks, setSubtasks] = useState<SubtaskInput[]>(
     task.subtasks?.map((st) => ({
       id: st.id,
@@ -59,6 +60,28 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
   const [categoryOptions, setCategoryOptions] = useState<CategoryOptions[]>([]);
 
   const { categories, fetchCategories } = useAddTaskForm();
+
+  // 定义提醒选项
+  const REMINDERS = [
+    { label: '无', value: 'none' },
+    { label: '任务时间', value: 'at_time' },
+    { label: '提前5分钟', value: '5min' },
+    { label: '提前15分钟', value: '15min' },
+    { label: '提前30分钟', value: '30min' },
+    { label: '提前1小时', value: '1hour' },
+    { label: '提前1天', value: '1day' },
+  ];
+
+  // 从UI提醒值映射到数据库提醒类型
+  const reminderTypeMap: Record<string, ReminderType> = {
+    none: 'none',
+    at_time: 'at_time',
+    '5min': '5_min_before',
+    '15min': '15_min_before',
+    '30min': '30_min_before',
+    '1hour': '1_hour_before',
+    '1day': '1_day_before',
+  };
 
   useEffect(() => {
     fetchCategories();
@@ -162,6 +185,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
       category_id: categoryId ? String(categoryId) : null,
       date,
       time: timeString,
+      reminder: reminderTypeMap[reminder] || 'none',
       subtasks: [
         // 已有子任务保留ID
         ...existingSubtasks.map((st) => ({
@@ -277,6 +301,21 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
           {showTimePicker && (
             <DateTimePicker value={time || new Date()} mode="time" display="default" onChange={onTimeChange} />
           )}
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={styles.label}>Reminder</Text>
+          <View style={styles.pickerContainer}>
+            <Picker
+              selectedValue={reminder}
+              onValueChange={(itemValue) => setReminder(itemValue as string)}
+              style={styles.picker}
+            >
+              {REMINDERS.map((item) => (
+                <Picker.Item key={item.value} label={item.label} value={item.value} />
+              ))}
+            </Picker>
+          </View>
         </View>
 
         <View style={styles.formGroup}>
