@@ -28,7 +28,11 @@ const SettingItem = ({ icon, iconColor, title, description, badge, rightElement 
     <View style={styles.settingDetail}>
       <View style={styles.titleContainer}>
         <Text style={styles.settingName}>{title}</Text>
-        {badge && <View style={styles.badgeContainer}><Text style={styles.badgeText}>{badge}</Text></View>}
+        {badge && (
+          <View style={styles.badgeContainer}>
+            <Text style={styles.badgeText}>{badge}</Text>
+          </View>
+        )}
       </View>
       <Text style={styles.settingDescription}>{description}</Text>
     </View>
@@ -70,11 +74,7 @@ export default function ProfileScreen() {
         }
 
         // 从 Supabase 获取用户设置
-        const { data, error } = await supabase
-          .from('todo_user_settings')
-          .select('*')
-          .eq('user_id', user.id)
-          .single();
+        const { data, error } = await supabase.from('todo_user_settings').select('*').eq('user_id', user.id).single();
 
         if (error) {
           console.error('获取用户设置时出错:', error);
@@ -82,7 +82,7 @@ export default function ProfileScreen() {
           setUserSettings({
             notifications_enabled: true,
             app_lock_enabled: false,
-            data_sync_enabled: true
+            data_sync_enabled: true,
           });
         } else {
           setUserSettings(data);
@@ -102,36 +102,39 @@ export default function ProfileScreen() {
     if (!userSettings) return;
 
     // 更新本地状态
-    setUserSettings(prev => prev ? { ...prev, [setting]: value } : null);
+    setUserSettings((prev) => (prev ? { ...prev, [setting]: value } : null));
 
     if (!user?.id) return;
 
     // 更新数据库
     try {
-      const { error } = await supabase
-        .from('todo_user_settings')
-        .upsert({
+      const { error } = await supabase.from('todo_user_settings').upsert(
+        {
           user_id: user.id,
           [setting]: value,
           // 如果是新记录，添加所有需要的字段
-          ...(userSettings ? {} : {
-            notifications_enabled: setting === 'notifications_enabled' ? value : true,
-            app_lock_enabled: setting === 'app_lock_enabled' ? value : false,
-            data_sync_enabled: setting === 'data_sync_enabled' ? value : true,
-          })
-        }, {
-          onConflict: 'user_id'
-        });
+          ...(userSettings
+            ? {}
+            : {
+                notifications_enabled: setting === 'notifications_enabled' ? value : true,
+                app_lock_enabled: setting === 'app_lock_enabled' ? value : false,
+                data_sync_enabled: setting === 'data_sync_enabled' ? value : true,
+              }),
+        },
+        {
+          onConflict: 'user_id',
+        }
+      );
 
       if (error) {
         console.error('更新用户设置时出错:', error);
         // 回滚本地状态
-        setUserSettings(prev => prev ? { ...prev, [setting]: !value } : null);
+        setUserSettings((prev) => (prev ? { ...prev, [setting]: !value } : null));
       }
     } catch (err) {
       console.error('更新用户设置时发生异常:', err);
       // 回滚本地状态
-      setUserSettings(prev => prev ? { ...prev, [setting]: !value } : null);
+      setUserSettings((prev) => (prev ? { ...prev, [setting]: !value } : null));
     }
   };
 
@@ -187,10 +190,7 @@ export default function ProfileScreen() {
         />
         <Text style={styles.userName}>{username}</Text>
         <Text style={styles.userEmail}>{email}</Text>
-        <TouchableOpacity
-          style={styles.editProfileBtn}
-          onPress={handleNavigateToEditProfile}
-        >
+        <TouchableOpacity style={styles.editProfileBtn} onPress={handleNavigateToEditProfile}>
           <FontAwesome name="edit" size={14} color="#007aff" style={styles.editIcon} />
           <Text style={styles.editProfileText}>编辑个人资料</Text>
         </TouchableOpacity>
@@ -208,7 +208,9 @@ export default function ProfileScreen() {
           rightElement={
             <ToggleItem
               isEnabled={userSettings?.notifications_enabled ?? true}
-              onChange={() => updateUserSetting('notifications_enabled', !(userSettings?.notifications_enabled ?? true))}
+              onChange={() =>
+                updateUserSetting('notifications_enabled', !(userSettings?.notifications_enabled ?? true))
+              }
             />
           }
         />
@@ -269,8 +271,8 @@ export default function ProfileScreen() {
           icon="trophy"
           iconColor="#5e5ce6"
           title="高级计划"
-          badge={isPremium ? "专业版" : undefined}
-          description={isPremium ? "有效期至2024年3月15日" : "解锁所有功能"}
+          badge={isPremium ? '专业版' : undefined}
+          description={isPremium ? '有效期至2024年3月15日' : '解锁所有功能'}
           rightElement={<ChevronItem />}
         />
       </View>
@@ -294,6 +296,21 @@ export default function ProfileScreen() {
           description="获取应用使用帮助"
           rightElement={<ChevronItem />}
         />
+
+        <TouchableOpacity style={styles.settingRow} onPress={() => router.push('/(profile)/feedback')}>
+          <View style={[styles.settingIcon, { backgroundColor: '#64d2ff' }]}>
+            <FontAwesome name="comment" size={16} color="#FFF" />
+          </View>
+          <View style={styles.settingDetail}>
+            <View style={styles.titleContainer}>
+              <Text style={styles.settingName}>意见反馈</Text>
+            </View>
+            <Text style={styles.settingDescription}>分享您的建议和问题</Text>
+          </View>
+          <View style={styles.chevronContainer}>
+            <FontAwesome name="chevron-right" size={14} color="#c7c7cc" />
+          </View>
+        </TouchableOpacity>
 
         <SettingItem
           icon="star"

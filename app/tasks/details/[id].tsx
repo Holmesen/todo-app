@@ -129,7 +129,6 @@ export default function TaskDetailScreen() {
 
   // Function to save task edits
   const saveTaskEdits = async (updatedTask: Partial<TaskWithRelations>) => {
-    console.log('updatedTask: ', updatedTask);
     if (!task) return;
 
     setIsSaving(true);
@@ -160,7 +159,6 @@ export default function TaskDetailScreen() {
         if (updatedTask.time) {
           // 如果有具体时间，基于任务日期和时间计算
           reminderTime = computedReminderTime(updatedTask);
-          console.log('reminderTime---', reminderTime);
 
           // 创建新的提醒记录
           if (reminderTime) {

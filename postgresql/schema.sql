@@ -299,4 +299,54 @@ CREATE INDEX idx_todo_categories_user_featured ON todo_categories(user_id, is_fe
 
 -- 活动日志索引
 CREATE INDEX idx_todo_activity_logs_user_id ON todo_activity_logs(user_id);
-CREATE INDEX idx_todo_activity_logs_created_at ON todo_activity_logs(created_at); 
+CREATE INDEX idx_todo_activity_logs_created_at ON todo_activity_logs(created_at);
+
+-- 创建反馈类型的枚举
+CREATE TYPE todo_feedback_type AS ENUM ('bug_report', 'feature_request', 'general_feedback', 'usability_issue', 'performance_issue');
+
+-- 创建反馈状态的枚举
+CREATE TYPE todo_feedback_status AS ENUM ('submitted', 'under_review', 'resolved', 'rejected');
+
+-- 用户反馈表
+CREATE TABLE todo_user_feedback (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    feedback_type todo_feedback_type NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    status todo_feedback_status DEFAULT 'submitted',
+    app_version VARCHAR(20),
+    device_info VARCHAR(100),
+    screenshot_url VARCHAR(255),
+    admin_response TEXT,
+    resolved_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES todo_users(id) ON DELETE CASCADE
+);
+COMMENT ON TABLE todo_user_feedback IS '存储用户反馈信息';
+COMMENT ON COLUMN todo_user_feedback.id IS '反馈ID，主键';
+COMMENT ON COLUMN todo_user_feedback.user_id IS '关联的用户ID';
+COMMENT ON COLUMN todo_user_feedback.feedback_type IS '反馈类型';
+COMMENT ON COLUMN todo_user_feedback.title IS '反馈标题';
+COMMENT ON COLUMN todo_user_feedback.description IS '反馈详情描述';
+COMMENT ON COLUMN todo_user_feedback.status IS '反馈状态';
+COMMENT ON COLUMN todo_user_feedback.app_version IS '应用版本号';
+COMMENT ON COLUMN todo_user_feedback.device_info IS '设备信息';
+COMMENT ON COLUMN todo_user_feedback.screenshot_url IS '屏幕截图URL';
+COMMENT ON COLUMN todo_user_feedback.admin_response IS '管理员回复';
+COMMENT ON COLUMN todo_user_feedback.resolved_at IS '解决时间';
+COMMENT ON COLUMN todo_user_feedback.created_at IS '创建时间';
+COMMENT ON COLUMN todo_user_feedback.updated_at IS '更新时间';
+
+-- 为user_feedback表创建更新时间触发器
+CREATE TRIGGER update_todo_user_feedback_modtime
+BEFORE UPDATE ON todo_user_feedback
+FOR EACH ROW
+EXECUTE FUNCTION update_todo_modified_column();
+
+-- 创建用户反馈索引
+CREATE INDEX idx_todo_user_feedback_user_id ON todo_user_feedback(user_id);
+CREATE INDEX idx_todo_user_feedback_status ON todo_user_feedback(status);
+CREATE INDEX idx_todo_user_feedback_type ON todo_user_feedback(feedback_type);
+CREATE INDEX idx_todo_user_feedback_created_at ON todo_user_feedback(created_at); 
