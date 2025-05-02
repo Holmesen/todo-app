@@ -8,6 +8,7 @@ interface UseTasksReturn {
   todayTasks: Task[];
   upcomingTasks: Task[];
   completedTasks: Task[];
+  overdueTasks: Task[];
   filteredTasks: Task[];
   allTasks: Task[];
   isLoading: boolean;
@@ -186,6 +187,10 @@ export function useTasks(): UseTasksReturn {
 
   const completedTasks = tasks.filter((task) => task.completed);
 
+  const overdueTasks = tasks.filter(
+    (task) => !task.completed && new Date().toLocaleDateString() > task.date.toLocaleDateString()
+  );
+
   const allTasks = tasks.filter((task) => !task.completed);
 
   return {
@@ -193,6 +198,7 @@ export function useTasks(): UseTasksReturn {
     todayTasks,
     upcomingTasks,
     completedTasks,
+    overdueTasks,
     filteredTasks,
     allTasks,
     isLoading,

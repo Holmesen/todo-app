@@ -37,6 +37,7 @@ export default function HomeScreen() {
     todayTasks,
     upcomingTasks,
     completedTasks,
+    overdueTasks,
     allTasks,
     isLoading: isTasksLoading,
     error: tasksError,
@@ -90,7 +91,7 @@ export default function HomeScreen() {
     router.push(`/tasks/details/${taskId}`);
   };
 
-  const handleSeeAllPress = (sectionType: 'today' | 'upcoming' | 'search' | 'completed') => {
+  const handleSeeAllPress = (sectionType: 'today' | 'upcoming' | 'search' | 'completed' | 'overdue') => {
     // Update active filter based on which section was pressed
     setActiveFilter(sectionType);
 
@@ -106,6 +107,8 @@ export default function HomeScreen() {
             ? '即将到来的任务'
             : sectionType === 'completed'
             ? '已完成的任务'
+            : sectionType === 'overdue'
+            ? '已过期的任务'
             : '搜索结果',
       },
     });
@@ -140,7 +143,11 @@ export default function HomeScreen() {
             router.push('/screens');
           }}
         >
-          今天
+          {new Date().toLocaleDateString('zh-CN', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+          })}
         </Text>
 
         {/* Search Bar */}
@@ -173,6 +180,13 @@ export default function HomeScreen() {
             isActive={activeFilter === 'upcoming'}
             onPress={() => handleFilterChange('upcoming')}
             color="#FF9500"
+          />
+          <ActionButton
+            label="已过期"
+            icon="exclamation-circle"
+            isActive={activeFilter === 'overdue'}
+            onPress={() => handleFilterChange('overdue')}
+            color="#FF3B30"
           />
           <ActionButton
             label="已完成"
@@ -271,6 +285,34 @@ export default function HomeScreen() {
             {upcomingTasks.length > 3 && (
               <TouchableOpacity style={styles.moreButton} onPress={() => handleSeeAllPress('upcoming')}>
                 <Text style={styles.moreButtonText}>查看全部 {upcomingTasks.length} 个任务</Text>
+              </TouchableOpacity>
+            )}
+          </TaskSection>
+        )}
+
+        {/* Overdue Tasks Section - Hide when searching */}
+        {!isSearching && !isLoading && !error && (
+          <TaskSection title="已过期任务" onSeeAll={() => handleSeeAllPress('overdue')}>
+            {overdueTasks.length === 0 ? (
+              <Text style={styles.emptyStateText}>没有已过期的任务</Text>
+            ) : (
+              // 只显示最近的3个已过期的任务
+              overdueTasks
+                .slice(0, 3)
+                .map((task) => (
+                  <TaskItem
+                    key={task.id?.toString()}
+                    id={task.id?.toString() || ''}
+                    title={task.title}
+                    priority={task.priority}
+                    time={taskService.formatTaskTime(task)}
+                    onPress={handleTaskPress}
+                  />
+                ))
+            )}
+            {overdueTasks.length > 3 && (
+              <TouchableOpacity style={styles.moreButton} onPress={() => handleSeeAllPress('overdue')}>
+                <Text style={styles.moreButtonText}>查看全部 {overdueTasks.length} 个任务</Text>
               </TouchableOpacity>
             )}
           </TaskSection>

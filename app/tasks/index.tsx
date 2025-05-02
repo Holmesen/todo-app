@@ -71,6 +71,10 @@ export default function TaskListScreen() {
       );
     } else if (currentFilter === 'completed') {
       return filteredBySearch.filter((task) => task.completed);
+    } else if (currentFilter === 'overdue') {
+      return filteredBySearch.filter(
+        (task) => !task.completed && new Date().toLocaleDateString() > task.date.toLocaleDateString()
+      );
     } else {
       return filteredBySearch;
     }
