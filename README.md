@@ -1,4 +1,4 @@
-# 📝 Todo App
+# 📝 TodoMaster
 
 A beautiful and functional Todo application built with React Native, Expo, and Supabase.
 
@@ -10,15 +10,28 @@ A beautiful and functional Todo application built with React Native, Expo, and S
 - 🔔 Set reminders for tasks
 - 🎨 Customize categories with colors and icons
 - 📱 Beautiful, cross-platform UI that works on iOS, Android, and Web
+- 💎 Premium subscription plans with advanced features
+- 🔄 Multi-device data synchronization
+- 📊 Task statistics and productivity analytics
 
 ## 🛠️ Technologies Used
 
 - **Frontend**: React Native, Expo
 - **Backend**: Supabase (PostgreSQL)
-- **State Management**: React Query, React Context
+- **State Management**: React Query, Zustand
 - **UI**: Custom components with thoughtful design
 - **Navigation**: Expo Router
 - **Data Fetching**: Supabase JS Client with real-time subscriptions
+- **Payment Integration**: Mock payment flow (real integration planned)
+
+## 📱 App Structure
+
+The application consists of the following main sections:
+
+- **Task Management**: Core functionality for creating and managing tasks
+- **Profile**: User profile information and settings management
+- **Premium Plan**: Subscription options and premium features showcase
+- **Help & Support**: FAQs and user assistance options
 
 ## 📋 Prerequisites
 
@@ -32,7 +45,7 @@ A beautiful and functional Todo application built with React Native, Expo, and S
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/Holmesen/todo-app.git
+git clone https://github.com/yourusername/todo-app.git
 cd todo-app
 ```
 
@@ -62,15 +75,67 @@ yarn install
 yarn start
 ```
 
-## 📱 Using the App
+## 📱 App Configuration
 
-After starting the app, you can:
+The app uses a centralized configuration system to manage all basic information:
 
-- View and filter tasks by categories
-- Add new tasks
-- Mark tasks as completed
-- Set reminders for important tasks
-- Create and manage custom categories
+### Configuration File
+
+App information is stored in the `app/config/app-info.ts` file, which includes:
+
+- **Basic Info**: App name, version number, build number, and release date
+- **Company Info**: Company name and copyright year
+- **Contact Info**: Support email, website, and social media links
+- **Legal Links**: URLs for privacy policy and terms of service
+- **Subscription Plans**: Pricing and details for different subscription tiers
+
+To update app information, simply modify this configuration file, and changes will automatically apply throughout the app.
+
+```typescript
+// Example of app/config/app-info.ts
+export const APP_INFO = {
+  NAME: 'TodoMaster',
+  VERSION: '2.1.0',
+  BUILD_NUMBER: '210',
+  // ... other configuration
+};
+```
+
+## 📁 Project Structure
+
+```
+todo-app/
+├── app/ - Expo Router app directory
+│   ├── (tabs)/ - Main tab pages
+│   ├── (profile)/ - Profile-related pages
+│   └── config/ - App configuration files
+├── assets/ - Images and other static assets
+├── components/ - Reusable UI components
+├── hooks/ - Custom React hooks
+├── lib/ - Utility functions and Supabase client
+├── postgresql/ - Database schema
+├── store/ - State management (Zustand)
+└── services/ - API service functions
+```
+
+## 🔒 Database Design
+
+The TodoMaster app uses a PostgreSQL database (via Supabase) with the following key features:
+
+- **Enum Types**: For task priorities, statuses, and action types
+- **JSONB Data Type**: For storing activity log details
+- **Trigger Functions**: For automatically updating record timestamps
+- **Relational Model**: Clear relationships between users, tasks, and categories
+
+Main data tables include:
+
+- **users**: User account information
+- **user_settings**: User preferences
+- **categories**: Task categories
+- **tasks**: Main task data
+- **subtasks**: Subtask data
+- **attachments**: Task attachments
+- **reminders**: Task reminder settings
 
 ## 🧪 Default Test Account
 
@@ -79,49 +144,18 @@ The seed script creates a demo user with the following credentials:
 - **Email**: demo@example.com
 - **Password**: demo123
 
-## 📁 Project Structure
-
-```
-todo-app/
-├── app/ - Expo Router app directory
-├── assets/ - Images and other static assets
-├── components/ - Reusable UI components
-├── context/ - React Context for state management
-├── hooks/ - Custom React hooks
-├── lib/ - Utility functions and Supabase client
-├── postgresql/ - Database schema
-├── scripts/ - Setup and utility scripts
-└── services/ - API service functions
-```
-
-## 🧩 Key Components
-
-- **TaskItem**: Displays a single task with priority, due time, and action buttons
-- **TaskSection**: Groups tasks by section (Today, Upcoming)
-- **ActionButton**: Category filter buttons with color and icon support
-- **SearchBar**: Allows searching through tasks
-
-## 🔄 State Management
-
-The app uses React hooks for state management, with Supabase's real-time subscriptions to keep the UI in sync with the database.
-
-## 🔒 Authentication
-
-Authentication is managed through Supabase Auth, with support for email/password and OAuth providers.
-
-## 📅 Future Enhancements
-
-- Task sharing and collaboration
-- Advanced filtering and sorting options
-- Dark mode support
-- Push notifications for reminders
-- Offline support with data synchronization
-
 ## 📄 License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-## 👏 Acknowledgements
+## 👏 Contributing
 
-- Icons from [Font Awesome](https://fontawesome.com/)
-- UI inspiration from various productivity apps
+Issues and pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+## 📅 Development Roadmap
+
+- [ ] Implement real payment integration
+- [ ] Add more task statistics and analytics
+- [ ] Implement team collaboration features
+- [ ] Add custom themes and more UI customization options
+- [ ] Offline support and data synchronization improvements

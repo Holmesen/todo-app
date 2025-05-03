@@ -62,7 +62,7 @@ const LoginScreen = () => {
               <View style={styles.appLogo}>
                 <Ionicons name="person" size={48} color="white" />
               </View>
-              <Text style={styles.appName}>TodoList</Text>
+              <Text style={styles.appName}>TodoMaster</Text>
               <Text style={styles.appSlogan}>高效管理您的任务</Text>
             </View>
 

@@ -1,6 +1,6 @@
-# TodoList 应用数据库设计说明 (PostgreSQL 版本)
+# TodoMaster 应用数据库设计说明 (PostgreSQL 版本)
 
-本文档描述了基于原型图设计的 TodoList 应用数据库结构，使用 PostgreSQL 数据库实现。
+本文档描述了基于原型图设计的 TodoMaster 应用数据库结构，使用 PostgreSQL 数据库实现。
 
 ## PostgreSQL 特性使用
 

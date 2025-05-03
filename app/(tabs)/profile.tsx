@@ -1,9 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, Switch, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+  Switch,
+  ActivityIndicator,
+  GestureResponderEvent,
+} from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
-import { useAuthStore } from '../../store/authStore';
-import { supabase } from '../../lib/supabase';
+import { useAuthStore } from '@/store/authStore';
+import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
+import APP_INFO from '../../config/app-info';
 
 interface UserSettings {
   notifications_enabled: boolean;
@@ -18,10 +29,19 @@ interface SettingItemProps {
   description: string;
   badge?: string;
   rightElement?: React.ReactNode;
+  onpress?: (event: GestureResponderEvent) => void;
 }
 
-const SettingItem = ({ icon, iconColor, title, description, badge, rightElement }: SettingItemProps) => (
-  <View style={styles.settingRow}>
+const SettingItem = ({
+  icon,
+  iconColor,
+  title,
+  description,
+  badge,
+  rightElement,
+  onpress = () => {},
+}: SettingItemProps) => (
+  <TouchableOpacity style={styles.settingRow} onPress={onpress}>
     <View style={[styles.settingIcon, { backgroundColor: iconColor }]}>
       <FontAwesome name={icon as any} size={16} color="#FFF" />
     </View>
@@ -37,7 +57,7 @@ const SettingItem = ({ icon, iconColor, title, description, badge, rightElement 
       <Text style={styles.settingDescription}>{description}</Text>
     </View>
     {rightElement}
-  </View>
+  </TouchableOpacity>
 );
 
 const ToggleItem = ({ isEnabled, onChange }: { isEnabled: boolean; onChange: () => void }) => (
@@ -272,8 +292,11 @@ export default function ProfileScreen() {
           iconColor="#5e5ce6"
           title="高级计划"
           badge={isPremium ? '专业版' : undefined}
-          description={isPremium ? '有效期至2024年3月15日' : '解锁所有功能'}
+          description={isPremium ? '有效期至2025年3月15日' : '解锁所有功能'}
           rightElement={<ChevronItem />}
+          onpress={() => {
+            router.push('/(profile)/premium-plan');
+          }}
         />
       </View>
 
@@ -286,7 +309,10 @@ export default function ProfileScreen() {
           iconColor="#64d2ff"
           title="关于"
           description="应用版本与信息"
-          rightElement={<ChevronItem value="v2.1.0" />}
+          rightElement={<ChevronItem value={`v${APP_INFO.VERSION}`} />}
+          onpress={() => {
+            router.push('/(profile)/about');
+          }}
         />
 
         <SettingItem
@@ -295,6 +321,9 @@ export default function ProfileScreen() {
           title="帮助与支持"
           description="获取应用使用帮助"
           rightElement={<ChevronItem />}
+          onpress={() => {
+            router.push('/(profile)/help-support');
+          }}
         />
 
         <TouchableOpacity style={styles.settingRow} onPress={() => router.push('/(profile)/feedback')}>
@@ -330,8 +359,12 @@ export default function ProfileScreen() {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <Text style={styles.footerText}>TodoList App v2.1.0</Text>
-        <Text style={styles.footerText}>© 2023 TaskMaster Inc. 保留所有权利</Text>
+        <Text style={styles.footerText}>
+          {APP_INFO.NAME} App v{APP_INFO.VERSION}
+        </Text>
+        <Text style={styles.footerText}>
+          © {APP_INFO.COPYRIGHT_YEAR} {APP_INFO.COMPANY} 保留所有权利
+        </Text>
       </View>
     </ScrollView>
   );

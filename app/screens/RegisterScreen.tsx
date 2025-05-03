@@ -101,7 +101,7 @@ const RegisterScreen = () => {
             <View style={styles.appLogo}>
               <Ionicons name="person-add" size={48} color="white" />
             </View>
-            <Text style={styles.appName}>TodoList</Text>
+            <Text style={styles.appName}>TodoMaster</Text>
             <Text style={styles.appSlogan}>创建新账号</Text>
           </View>
 

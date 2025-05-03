@@ -1,5 +1,5 @@
--- TodoList 应用数据库表结构 (PostgreSQL版本)
--- 创建日期: 2023-09-08
+-- TodoMaster 应用数据库表结构 (PostgreSQL版本)
+-- 创建日期: 2025-09-08
 
 -- 用户表
 CREATE TABLE todo_users (
