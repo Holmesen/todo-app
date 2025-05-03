@@ -1,96 +1,94 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import Svg, { Circle } from 'react-native-svg';
+import Svg, { G, Circle } from 'react-native-svg';
 
 interface ProgressCircleProps {
-  percentage: number;
+  percentage: number; // 0 到 1 之间的值
   size?: number;
   strokeWidth?: number;
-  progressColor?: string;
-  backgroundColor?: string;
   label?: string;
+  color?: string;
+  bgColor?: string;
 }
 
-export const ProgressCircle = ({
-  percentage,
-  size = 180,
-  strokeWidth = 12,
-  progressColor = '#007AFF',
-  backgroundColor = '#E5E5EA',
-  label = 'Completion Rate'
-}: ProgressCircleProps) => {
-  // Calculate properties for the circle
-  const radius = (size - strokeWidth) / 2;
-  const circleCircumference = 2 * Math.PI * radius;
-  const strokeDashoffset = circleCircumference - (percentage / 100) * circleCircumference;
+/**
+ * 进度圆环组件
+ * 显示圆形进度指示器，常用于展示完成率或百分比
+ */
+export function ProgressCircle({
+  percentage = 0,
+  size = 160,
+  strokeWidth = 10,
+  label = '完成率',
+  color = '#007AFF',
+  bgColor = '#E5E5EA',
+}: ProgressCircleProps) {
+  // 确保百分比值在 0 和 1 之间
+  const validPercentage = Math.min(Math.max(percentage, 0), 1);
 
-  // Center position
-  const center = size / 2;
+  // 圆的半径
+  const radius = (size - strokeWidth) / 2;
+  // 圆的周长
+  const circumference = radius * 2 * Math.PI;
+  // 基于百分比计算描边的长度
+  const strokeDashoffset = circumference * (1 - validPercentage);
+
+  // 显示的百分比文本
+  const percentageText = `${Math.round(validPercentage * 100)}%`;
 
   return (
     <View style={styles.container}>
       <Svg width={size} height={size}>
-        {/* Background Circle */}
-        <Circle
-          cx={center}
-          cy={center}
-          r={radius}
-          stroke={backgroundColor}
-          strokeWidth={strokeWidth}
-          fill="transparent"
-        />
-
-        {/* Progress Circle */}
-        <Circle
-          cx={center}
-          cy={center}
-          r={radius}
-          stroke={progressColor}
-          strokeWidth={strokeWidth}
-          strokeDasharray={circleCircumference}
-          strokeDashoffset={strokeDashoffset}
-          strokeLinecap="round"
-          fill="transparent"
-          transform={`rotate(-90 ${center} ${center})`}
-        />
+        <G rotation="-90" origin={`${size / 2}, ${size / 2}`}>
+          {/* 背景圆环 */}
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={bgColor}
+            strokeWidth={strokeWidth}
+            fill="transparent"
+          />
+          {/* 进度圆环 */}
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke={color}
+            strokeWidth={strokeWidth}
+            fill="transparent"
+            strokeDasharray={circumference}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+          />
+        </G>
       </Svg>
-
-      <View style={[styles.textContainer, { width: '100%', height: size }]}>
-        <Text style={styles.percentageText}>{`${Math.round(percentage)}%`}</Text>
-        <Text style={styles.labelText}>{label}</Text>
+      <View style={[styles.labelContainer, { width: size, height: size }]}>
+        <Text style={styles.percentageText}>{percentageText}</Text>
+        <Text style={styles.label}>{label}</Text>
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
-    marginVertical: 20,
   },
-  textContainer: {
+  labelContainer: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
     alignItems: 'center',
-
+    justifyContent: 'center',
   },
   percentageText: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
     color: '#000000',
-    textAlign: 'center',
   },
-  labelText: {
+  label: {
     fontSize: 14,
     color: '#8E8E93',
     marginTop: 4,
   },
-}); 
+});

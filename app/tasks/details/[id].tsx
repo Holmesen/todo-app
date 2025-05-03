@@ -49,13 +49,13 @@ export default function TaskDetailScreen() {
     try {
       const taskData = await taskService.getTaskById(id);
       if (!taskData) {
-        throw new Error('Task not found');
+        throw new Error('未找到任务');
       }
 
       setTask(taskData);
     } catch (err) {
-      console.error('Error fetching task details:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load task details');
+      console.error('获取任务详情出错:', err);
+      setError(err instanceof Error ? err.message : '无法加载任务详情');
     } finally {
       setIsLoading(false);
     }
@@ -83,8 +83,8 @@ export default function TaskDetailScreen() {
       // Update in Supabase via taskService
       await taskService.toggleSubtaskCompletion(subtaskId, !subtask.completed);
     } catch (err) {
-      console.error('Error updating subtask:', err);
-      Alert.alert('Error', 'Failed to update subtask');
+      console.error('更新子任务出错:', err);
+      Alert.alert('错误', '无法更新子任务');
       // Revert the optimistic update
       if (taskId) fetchTaskDetails(taskId.toString());
     }
@@ -222,10 +222,10 @@ export default function TaskDetailScreen() {
       // Refresh task data
       fetchTaskDetails(task.id);
       setShowEditModal(false);
-      Alert.alert('Success', 'Task updated successfully');
+      Alert.alert('成功', '任务更新成功');
     } catch (err) {
-      console.error('Error updating task:', err);
-      Alert.alert('Error', 'Failed to update task');
+      console.error('更新任务出错:', err);
+      Alert.alert('错误', '无法更新任务');
     } finally {
       setIsSaving(false);
     }
@@ -235,10 +235,10 @@ export default function TaskDetailScreen() {
   const completeTask = async () => {
     if (!task) return;
 
-    Alert.alert('Complete Task', 'Are you sure you want to mark this task as complete?', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('完成任务', '您确定要将此任务标记为完成吗？', [
+      { text: '取消', style: 'cancel' },
       {
-        text: 'Complete',
+        text: '完成',
         onPress: async () => {
           setIsSaving(true);
           try {
@@ -248,11 +248,11 @@ export default function TaskDetailScreen() {
             });
 
             setTask((prevTask) => (prevTask ? { ...prevTask, completed: true } : null));
-            Alert.alert('Success', 'Task marked as complete');
+            Alert.alert('成功', '任务已标记为完成');
             setTimeout(() => router.back(), 1500);
           } catch (err) {
-            console.error('Error completing task:', err);
-            Alert.alert('Error', 'Failed to complete task');
+            console.error('完成任务出错:', err);
+            Alert.alert('错误', '无法完成任务');
           } finally {
             setIsSaving(false);
           }
@@ -272,20 +272,20 @@ export default function TaskDetailScreen() {
   const deleteTask = () => {
     if (!task) return;
 
-    Alert.alert('Delete Task', 'Are you sure you want to delete this task? This action cannot be undone.', [
-      { text: 'Cancel', style: 'cancel' },
+    Alert.alert('删除任务', '您确定要删除此任务吗？此操作无法撤销。', [
+      { text: '取消', style: 'cancel' },
       {
-        text: 'Delete',
+        text: '删除',
         style: 'destructive',
         onPress: async () => {
           setIsSaving(true);
           try {
             await taskService.deleteTask(task.id);
-            Alert.alert('Success', 'Task deleted successfully');
+            Alert.alert('成功', '任务删除成功');
             setTimeout(() => router.back(), 1500);
           } catch (err) {
-            console.error('Error deleting task:', err);
-            Alert.alert('Error', 'Failed to delete task');
+            console.error('删除任务出错:', err);
+            Alert.alert('错误', '无法删除任务');
           } finally {
             setIsSaving(false);
           }
@@ -306,9 +306,9 @@ export default function TaskDetailScreen() {
       date.getMonth() === today.getMonth() &&
       date.getFullYear() === today.getFullYear()
     ) {
-      return 'Today';
+      return '今天';
     }
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString('zh-CN', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -348,7 +348,7 @@ export default function TaskDetailScreen() {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <ActivityIndicator size="large" color="#007aff" />
-        <Text style={styles.loadingText}>Loading task details...</Text>
+        <Text style={styles.loadingText}>正在加载任务详情...</Text>
       </View>
     );
   }
@@ -357,9 +357,9 @@ export default function TaskDetailScreen() {
   if (error) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>Error: {error}</Text>
+        <Text style={styles.errorText}>错误: {error}</Text>
         <TouchableOpacity style={styles.retryButton} onPress={() => taskId && fetchTaskDetails(taskId.toString())}>
-          <Text style={styles.retryButtonText}>Retry</Text>
+          <Text style={styles.retryButtonText}>重试</Text>
         </TouchableOpacity>
       </View>
     );
@@ -369,9 +369,9 @@ export default function TaskDetailScreen() {
   if (!task) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <Text style={styles.errorText}>Task not found</Text>
+        <Text style={styles.errorText}>未找到任务</Text>
         <TouchableOpacity style={styles.retryButton} onPress={() => router.back()}>
-          <Text style={styles.retryButtonText}>Go Back</Text>
+          <Text style={styles.retryButtonText}>返回</Text>
         </TouchableOpacity>
       </View>
     );
@@ -385,9 +385,9 @@ export default function TaskDetailScreen() {
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
           <FontAwesome name="chevron-left" size={16} color="#007aff" />
-          <Text style={styles.backButtonText}>Tasks</Text>
+          <Text style={styles.backButtonText}>任务</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Task Details</Text>
+        <Text style={styles.headerTitle}>任务详情</Text>
         <View style={{ width: 60 }} />
       </View>
 
@@ -403,7 +403,7 @@ export default function TaskDetailScreen() {
           {/* Priority Badge */}
           <View style={[styles.priorityBadge, { backgroundColor: priorityStyles.backgroundColor }]}>
             <Text style={[styles.priorityText, { color: priorityStyles.color }]}>
-              {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
+              {task.priority === 'high' ? '高' : task.priority === 'medium' ? '中' : '低'}优先级
             </Text>
           </View>
 
@@ -439,7 +439,7 @@ export default function TaskDetailScreen() {
           {/* Description Section */}
           {task.description && (
             <>
-              <Text style={styles.sectionTitle}>Description</Text>
+              <Text style={styles.sectionTitle}>描述</Text>
               <Text style={styles.taskDescription}>{task.description}</Text>
             </>
           )}
@@ -448,7 +448,7 @@ export default function TaskDetailScreen() {
           {task.subtasks && task.subtasks.length > 0 && (
             <>
               <Text style={styles.sectionTitle}>
-                Subtasks ({completedSubtasks}/{totalSubtasks})
+                子任务 ({completedSubtasks}/{totalSubtasks})
               </Text>
               <View style={styles.subtasksList}>
                 {task.subtasks.map((subtask) => (
@@ -472,15 +472,13 @@ export default function TaskDetailScreen() {
           {/* Attachments Section */}
           {task.attachments && task.attachments.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>Attachments</Text>
+              <Text style={styles.sectionTitle}>附件</Text>
               <View style={styles.attachments}>
                 {task.attachments.map((attachment) => (
                   <TouchableOpacity
                     key={attachment.id}
                     style={styles.attachment}
-                    onPress={() =>
-                      Alert.alert('View Attachment', 'Attachment viewer will be available in a future update.')
-                    }
+                    onPress={() => Alert.alert('查看附件', '附件查看器将在未来版本中提供。')}
                   >
                     <Image source={{ uri: attachment.uri }} style={styles.attachmentImage} />
                     <View style={styles.attachmentIcon}>
@@ -533,7 +531,7 @@ export default function TaskDetailScreen() {
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Edit Task</Text>
+            <Text style={styles.modalTitle}>编辑任务</Text>
             <TouchableOpacity
               style={styles.modalCloseButton}
               onPress={() => setShowEditModal(false)}

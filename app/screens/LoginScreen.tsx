@@ -48,14 +48,8 @@ const LoginScreen = () => {
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={{ flex: 1 }}
-      >
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-          keyboardShouldPersistTaps="handled"
-        >
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+        <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <View style={styles.contentArea}>
             {/* 标题 */}
             <View style={styles.headerContainer}>
@@ -113,19 +107,8 @@ const LoginScreen = () => {
               </TouchableOpacity>
             </View>
 
-            {/* Social Login Divider */}
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <Text style={styles.dividerText}>或</Text>
-              <View style={styles.dividerLine} />
-            </View>
-
             {/* Sign Up Prompt */}
-            <TouchableOpacity
-              style={styles.signupPrompt}
-              onPress={navigateToRegister}
-              disabled={isLoading}
-            >
+            <TouchableOpacity style={styles.signupPrompt} onPress={navigateToRegister} disabled={isLoading}>
               <Text style={styles.signupPromptText}>
                 还没有账号? <Text style={styles.signupLink}>立即注册</Text>
               </Text>
@@ -261,4 +244,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default LoginScreen; 
+export default LoginScreen;

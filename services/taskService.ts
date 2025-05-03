@@ -4,7 +4,7 @@ import { formatISO, startOfDay, endOfDay, addDays, parseISO } from 'date-fns';
 import { z } from 'zod';
 import { setupTaskReminder, deleteTaskReminders } from '../lib/notifications';
 
-// Enum types from database schema
+// 数据库模式中的枚举类型
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskStatus = 'pending' | 'completed' | 'overdue';
 export type ReminderType =
@@ -16,24 +16,24 @@ export type ReminderType =
   | '1_hour_before'
   | '1_day_before';
 
-// Type definitions aligned with database schema
+// 与数据库模式对齐的类型定义
 export interface DbTask {
   id: number;
   user_id: number;
   category_id: number | null;
   title: string;
   description: string | null;
-  due_date: string; // ISO date string format
-  due_time: string | null; // ISO time string format
+  due_date: string; // ISO日期字符串格式
+  due_time: string | null; // ISO时间字符串格式
   priority: TaskPriority;
   status: TaskStatus;
-  reminder_time: string | null; // ISO datetime string format
-  completed_at: string | null; // ISO datetime string format
+  reminder_time: string | null; // ISO日期时间字符串格式
+  completed_at: string | null; // ISO日期时间字符串格式
   created_at?: string;
   updated_at?: string;
 }
 
-// Category definition aligned with schema
+// 与模式对齐的分类定义
 export interface Category {
   id: number;
   user_id: number;
@@ -45,7 +45,7 @@ export interface Category {
   updated_at?: string;
 }
 
-// Subtask definition aligned with schema
+// 与模式对齐的子任务定义
 export interface DbSubtask {
   id: number;
   task_id: number;
@@ -56,7 +56,7 @@ export interface DbSubtask {
   completed_at?: string | null;
 }
 
-// Attachment definition aligned with schema
+// 与模式对齐的附件定义
 export interface Attachment {
   id: number;
   task_id: number;
@@ -67,7 +67,7 @@ export interface Attachment {
   created_at?: string;
 }
 
-// Reminder definition aligned with schema
+// 与模式对齐的提醒定义
 export interface Reminder {
   id: number;
   task_id: number;
@@ -78,14 +78,14 @@ export interface Reminder {
   updated_at?: string;
 }
 
-// Create task input
+// 创建任务输入
 export interface CreateTaskInput {
   task: Omit<DbTask, 'id' | 'created_at' | 'updated_at'>;
   subtasks?: Omit<DbSubtask, 'id' | 'task_id' | 'created_at' | 'updated_at' | 'completed_at'>[];
   reminder?: Omit<Reminder, 'id' | 'task_id' | 'created_at' | 'updated_at'>;
 }
 
-// Response types
+// 响应类型
 export interface ServiceResponse<T> {
   data: T | null;
   error: PostgrestError | Error | null;
@@ -104,10 +104,10 @@ export interface TaskResult {
   error: PostgrestError | null;
 }
 
-// Zod Schemas for the API Layer
-// These are used to validate and transform data between DB and application
+// API层的Zod模式
+// 用于验证和转换数据库与应用程序之间的数据
 
-// Subtask schema for the app layer
+// 应用层的子任务模式
 export const SubtaskSchema = z.object({
   id: z.union([z.number(), z.null()]).transform((n) => n ?? null),
   title: z.string(),
@@ -127,7 +127,7 @@ export const SubtaskSchema = z.object({
   updated_at: z.string().optional(),
 });
 
-// Task schema for the app layer
+// 应用层的任务模式
 export const TaskSchema = z.object({
   id: z.union([z.number(), z.string()]).transform((n) => n.toString()),
   title: z.string(),
@@ -153,7 +153,7 @@ export const TaskSchema = z.object({
   updated_at: z.union([z.string().transform((str) => new Date(str)), z.date()]),
 });
 
-// Task with relations schema
+// 带关联的任务模式
 export const TaskWithRelationsSchema = TaskSchema.extend({
   subtasks: z.array(SubtaskSchema).optional(),
   attachments: z
@@ -168,12 +168,12 @@ export const TaskWithRelationsSchema = TaskSchema.extend({
     .optional(),
 });
 
-// Types used in the application
+// 应用程序中使用的类型
 export type Task = z.infer<typeof TaskSchema>;
 export type TaskWithRelations = z.infer<typeof TaskWithRelationsSchema>;
 export type Subtask = z.infer<typeof SubtaskSchema>;
 
-// Transform DB Task to App Task
+// 将数据库任务转换为应用任务
 function transformDbTaskToAppTask(dbTask: DbTask): Task {
   return {
     id: dbTask.id.toString(),
@@ -191,6 +191,7 @@ function transformDbTaskToAppTask(dbTask: DbTask): Task {
 }
 
 class TaskService {
+  // 计算提醒时间
   calculateReminderTime(dueDate: string, dueTime: string | null, reminderType: string) {
     if (reminderType === 'none') return null;
     if (reminderType === 'at_time') return formatISO(startOfDay(parseISO(dueDate)));
@@ -427,11 +428,15 @@ class TaskService {
 
     let dateStr = '';
     if (isToday) {
-      dateStr = 'Today';
+      dateStr = '今天';
     } else if (isTomorrow) {
-      dateStr = 'Tomorrow';
+      dateStr = '明天';
     } else {
-      dateStr = taskDate.toLocaleDateString();
+      dateStr = taskDate.toLocaleDateString('zh-CN', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
     }
 
     if (task.time) {

@@ -11,12 +11,7 @@ interface CategoryListItemProps {
   isDeleting?: boolean;
 }
 
-export function CategoryListItem({
-  category,
-  onPress,
-  onDelete,
-  isDeleting = false
-}: CategoryListItemProps) {
+export function CategoryListItem({ category, onPress, onDelete, isDeleting = false }: CategoryListItemProps) {
   const handlePress = () => {
     if (onPress) {
       onPress(category);
@@ -27,35 +22,26 @@ export function CategoryListItem({
     if (onDelete) {
       // 显示确认对话框
       Alert.alert(
-        "删除类别",
+        '删除类别',
         `确定要删除"${category.name}"类别吗？此操作不可恢复，该类别下的任务将不再属于任何类别。`,
         [
           {
-            text: "取消",
-            style: "cancel"
+            text: '取消',
+            style: 'cancel',
           },
           {
-            text: "删除",
+            text: '删除',
             onPress: () => onDelete(category),
-            style: "destructive"
-          }
+            style: 'destructive',
+          },
         ]
       );
     }
   };
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={handlePress}
-      activeOpacity={0.9}
-      disabled={isDeleting}
-    >
-      <CategoryIcon
-        name={category.icon || 'tag'}
-        color={category.color}
-        size="small"
-      />
+    <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.9} disabled={isDeleting}>
+      <CategoryIcon name={category.icon || 'tag'} color={category.color} size={24} />
       <View style={styles.details}>
         <Text style={styles.categoryName}>{category.name}</Text>
         <Text style={styles.taskCount}>{category.taskCount} tasks</Text>
@@ -65,7 +51,7 @@ export function CategoryListItem({
           <View
             style={[
               styles.progressValue,
-              { width: `${category.progressPercentage}%`, backgroundColor: category.color }
+              { width: `${category.progressPercentage}%`, backgroundColor: category.color },
             ]}
           />
         </View>
@@ -74,11 +60,7 @@ export function CategoryListItem({
 
       {/* 删除按钮 */}
       {onDelete && (
-        <TouchableOpacity
-          style={styles.deleteButton}
-          onPress={handleDelete}
-          disabled={isDeleting}
-        >
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDelete} disabled={isDeleting}>
           {isDeleting ? (
             <View style={styles.loadingIndicator} />
           ) : (
@@ -151,5 +133,5 @@ const styles = StyleSheet.create({
     borderColor: '#FF3B30',
     borderTopColor: 'transparent',
     transform: [{ rotate: '45deg' }],
-  }
-}); 
+  },
+});

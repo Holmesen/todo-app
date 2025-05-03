@@ -1,49 +1,72 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-// 任务优先级类型
-export type TaskPriority = 'low' | 'medium' | 'high';
-
-// 优先级选择器属性接口
 interface PrioritySelectorProps {
-  selectedPriority: TaskPriority;
-  onSelectPriority: (priority: TaskPriority) => void;
+  selectedPriority: string;
+  onSelectPriority: (priority: string) => void;
+  label?: string;
 }
 
-export function PrioritySelector({ selectedPriority, onSelectPriority }: PrioritySelectorProps) {
-  // 优先级选项
-  const priorities: { value: TaskPriority; label: string; color: string }[] = [
-    { value: 'low', label: '低', color: '#30C48D' },
-    { value: 'medium', label: '中', color: '#007aff' },
-    { value: 'high', label: '高', color: '#FF2D55' },
-  ];
+// 优先级选项及其配置
+const PRIORITIES = [
+  {
+    id: 'low',
+    label: '低',
+    colors: {
+      bg: '#e6f9f5',
+      border: '#87dfa8',
+      text: '#34c759',
+    },
+  },
+  {
+    id: 'medium',
+    label: '中',
+    colors: {
+      bg: '#fff4e6',
+      border: '#ffcc80',
+      text: '#ff9500',
+    },
+  },
+  {
+    id: 'high',
+    label: '高',
+    colors: {
+      bg: '#ffebe6',
+      border: '#ff9489',
+      text: '#ff3b30',
+    },
+  },
+];
 
+/**
+ * 优先级选择器组件
+ * 用于选择任务优先级的按钮组
+ */
+export function PrioritySelector({ selectedPriority, onSelectPriority, label = '优先级' }: PrioritySelectorProps) {
   return (
     <View style={styles.container}>
-      <Text style={styles.label}>优先级</Text>
-      <View style={styles.buttonsContainer}>
-        {priorities.map((priority) => (
-          <TouchableOpacity
-            key={priority.value}
-            style={[
-              styles.priorityButton,
-              {
-                backgroundColor: selectedPriority === priority.value ? priority.color : 'transparent',
-                borderColor: priority.color
-              }
-            ]}
-            onPress={() => onSelectPriority(priority.value)}
-          >
-            <Text
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.priorityButtons}>
+        {PRIORITIES.map((priority) => {
+          const isSelected = selectedPriority === priority.id;
+          return (
+            <TouchableOpacity
+              key={priority.id}
               style={[
-                styles.priorityText,
-                { color: selectedPriority === priority.value ? '#FFFFFF' : priority.color },
+                styles.priorityButton,
+                {
+                  backgroundColor: isSelected ? priority.colors.bg : 'transparent',
+                  borderColor: isSelected ? priority.colors.border : '#D1D1D6',
+                },
               ]}
+              onPress={() => onSelectPriority(priority.id)}
             >
-              {priority.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text style={[styles.priorityButtonText, { color: isSelected ? priority.colors.text : '#8E8E93' }]}>
+                {priority.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
     </View>
   );
@@ -51,29 +74,29 @@ export function PrioritySelector({ selectedPriority, onSelectPriority }: Priorit
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   label: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
-    color: '#3A3A3C',
     marginBottom: 8,
+    color: '#333333',
   },
-  buttonsContainer: {
+  priorityButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
   priorityButton: {
     flex: 1,
-    paddingVertical: 12,
-    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 4,
+    paddingVertical: 12,
     borderWidth: 1,
+    borderRadius: 10,
+    marginHorizontal: 4,
   },
-  priorityText: {
-    fontSize: 15,
+  priorityButtonText: {
     fontWeight: '600',
+    fontSize: 15,
   },
-}); 
+});

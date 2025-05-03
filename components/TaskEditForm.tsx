@@ -100,7 +100,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
     );
   }, [categories]);
 
-  // Handle date change
+  // 处理日期变更
   const onDateChange = (event: any, selectedDate?: Date) => {
     setShowDatePicker(false);
     if (selectedDate) {
@@ -109,7 +109,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
     }
   };
 
-  // Handle time change
+  // 处理时间变更
   const onTimeChange = (event: any, selectedTime?: Date) => {
     setShowTimePicker(false);
     if (selectedTime) {
@@ -118,7 +118,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
     }
   };
 
-  // Add a new subtask
+  // 添加新子任务
   const addSubtask = () => {
     const newSubtask: SubtaskInput = {
       id: null, // 新子任务没有ID，数据库会自动分配
@@ -129,32 +129,32 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
     setSubtasks([...subtasks, newSubtask]);
   };
 
-  // Update subtask title
+  // 更新子任务标题
   const updateSubtaskTitle = (index: number, newTitle: string) => {
     setSubtasks(subtasks.map((st, idx) => (idx === index ? { ...st, title: newTitle } : st)));
   };
 
-  // Toggle subtask completion
+  // 切换子任务完成状态
   const toggleSubtaskCompletion = (index: number) => {
     setSubtasks(subtasks.map((st, idx) => (idx === index ? { ...st, completed: !st.completed } : st)));
   };
 
-  // Remove subtask
+  // 删除子任务
   const removeSubtask = (index: number) => {
     setSubtasks(subtasks.filter((_, idx) => idx !== index));
   };
 
-  // Validate the form
+  // 表单验证
   const validateForm = () => {
     const errors: Record<string, string> = {};
 
     if (!title.trim()) {
-      errors.title = 'Title is required';
+      errors.title = '标题不能为空';
     }
 
     const hasEmptySubtasks = subtasks.some((st) => !st.title.trim());
     if (hasEmptySubtasks) {
-      errors.subtasks = 'All subtasks must have a title';
+      errors.subtasks = '所有子任务必须有标题';
     }
 
     setFormErrors(errors);
@@ -162,21 +162,21 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
     return Object.keys(errors).length === 0;
   };
 
-  // Handle form submission
+  // 处理表单提交
   const handleSubmit = async () => {
     if (!validateForm()) {
-      Alert.alert('Validation Error', 'Please fix the errors before saving.');
+      Alert.alert('验证错误', '请在保存前修复错误。');
       return;
     }
 
-    // Format time string if time is selected
+    // 如果选择了时间则格式化时间字符串
     const timeString = time ? format(time, 'HH:mm:ss') : null;
 
     // 将子任务分为已有的和新增的
     const existingSubtasks = subtasks.filter((st) => st.id !== null && !st.isNew);
     const newSubtasks = subtasks.filter((st) => st.isNew || st.id === null);
 
-    // Create updated task object
+    // 创建更新后的任务对象
     const updatedTask: Partial<TaskWithRelations> = {
       id: task.id,
       title,
@@ -204,30 +204,36 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
       ],
     };
 
+    // 调用保存回调
+    await onSave(updatedTask);
+  };
+
+  // 格式化日期显示
+  const formatDate = (date: Date) => {
     try {
-      await onSave(updatedTask);
+      return format(date, 'yyyy-MM-dd');
     } catch (error) {
-      console.error('Error saving task:', error);
-      Alert.alert('Error', 'Failed to save task changes.');
+      console.error('格式化日期出错:', error);
+      return '无效日期';
     }
   };
 
-  // Format date for display
-  const formatDate = (date: Date) => {
-    return format(date, 'EEEE, MMMM d, yyyy');
-  };
-
-  // Format time for display
+  // 格式化时间显示
   const formatTime = (time: Date | null) => {
-    if (!time) return 'No time set';
-    return format(time, 'h:mm a');
+    if (!time) return '未设置';
+    try {
+      return format(time, 'HH:mm');
+    } catch (error) {
+      console.error('格式化时间出错:', error);
+      return '无效时间';
+    }
   };
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
       <ScrollView style={styles.scrollView} keyboardShouldPersistTaps="handled">
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Title</Text>
+          <Text style={styles.label}>标题</Text>
           <TextInput
             style={[styles.input, formErrors.title ? styles.inputError : null]}
             value={title}
@@ -235,32 +241,32 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
               setTitle(text);
               validateForm();
             }}
-            placeholder="Task title"
+            placeholder="任务标题"
           />
           {formErrors.title ? <Text style={styles.errorText}>{formErrors.title}</Text> : null}
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Description</Text>
+          <Text style={styles.label}>描述</Text>
           <TextInput
             style={[styles.textarea]}
             value={description}
             onChangeText={setDescription}
-            placeholder="Task description (optional)"
+            placeholder="任务描述（可选）"
             multiline
             numberOfLines={4}
           />
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Category</Text>
+          <Text style={styles.label}>分类</Text>
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={categoryId}
               onValueChange={(itemValue) => setCategoryId(itemValue)}
               style={styles.picker}
             >
-              <Picker.Item label="No Category" value={null} />
+              <Picker.Item label="无分类" value={null} />
               {categoryOptions.map((category) => (
                 <Picker.Item key={category.value} label={category.label} value={category.value} />
               ))}
@@ -269,22 +275,22 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Priority</Text>
+          <Text style={styles.label}>优先级</Text>
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={priority}
               onValueChange={(itemValue) => setPriority(itemValue as 'low' | 'medium' | 'high')}
               style={styles.picker}
             >
-              <Picker.Item label="Low" value="low" />
-              <Picker.Item label="Medium" value="medium" />
-              <Picker.Item label="High" value="high" />
+              <Picker.Item label="低" value="low" />
+              <Picker.Item label="中" value="medium" />
+              <Picker.Item label="高" value="high" />
             </Picker>
           </View>
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Due Date</Text>
+          <Text style={styles.label}>截止日期</Text>
           <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowDatePicker(true)}>
             <FontAwesome name="calendar" size={18} color="#007aff" style={styles.dateTimeIcon} />
             <Text style={styles.dateTimeText}>{formatDate(date)}</Text>
@@ -293,10 +299,10 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Due Time (Optional)</Text>
+          <Text style={styles.label}>截止时间（可选）</Text>
           <TouchableOpacity style={styles.dateTimeButton} onPress={() => setShowTimePicker(true)}>
             <FontAwesome name="clock-o" size={18} color="#007aff" style={styles.dateTimeIcon} />
-            <Text style={styles.dateTimeText}>{time ? formatTime(time) : 'Set time'}</Text>
+            <Text style={styles.dateTimeText}>{time ? formatTime(time) : '设置时间'}</Text>
           </TouchableOpacity>
           {showTimePicker && (
             <DateTimePicker value={time || new Date()} mode="time" display="default" onChange={onTimeChange} />
@@ -304,7 +310,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
         </View>
 
         <View style={styles.formGroup}>
-          <Text style={styles.label}>Reminder</Text>
+          <Text style={styles.label}>提醒</Text>
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={reminder}
@@ -320,10 +326,10 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
 
         <View style={styles.formGroup}>
           <View style={styles.subtasksHeader}>
-            <Text style={styles.label}>Subtasks</Text>
+            <Text style={styles.label}>子任务</Text>
             <TouchableOpacity style={styles.addSubtaskButton} onPress={addSubtask}>
               <FontAwesome name="plus" size={16} color="#007aff" />
-              <Text style={styles.addSubtaskText}>Add Subtask</Text>
+              <Text style={styles.addSubtaskText}>添加子任务</Text>
             </TouchableOpacity>
           </View>
           {formErrors.subtasks ? <Text style={styles.errorText}>{formErrors.subtasks}</Text> : null}
@@ -337,7 +343,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
                   style={styles.subtaskInput}
                   value={subtask.title}
                   onChangeText={(text) => updateSubtaskTitle(index, text)}
-                  placeholder="Subtask title"
+                  placeholder="子任务标题"
                 />
                 <TouchableOpacity style={styles.subtaskRemoveButton} onPress={() => removeSubtask(index)}>
                   <FontAwesome name="trash" size={16} color="#FF3B30" />
@@ -349,7 +355,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
 
         <View style={styles.formActions}>
           <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={onCancel} disabled={isSaving}>
-            <Text style={styles.cancelButtonText}>Cancel</Text>
+            <Text style={styles.cancelButtonText}>取消</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.button, styles.saveButton, hasErrors ? styles.disabledButton : null]}
@@ -359,7 +365,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
             {isSaving ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Text style={styles.saveButtonText}>Save</Text>
+              <Text style={styles.saveButtonText}>保存</Text>
             )}
           </TouchableOpacity>
         </View>

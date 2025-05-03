@@ -1,37 +1,43 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface TaskSectionProps {
   title: string;
+  children: ReactNode;
   onSeeAll?: () => void;
-  children: React.ReactNode;
 }
 
-export function TaskSection({ title, onSeeAll, children }: TaskSectionProps) {
+/**
+ * 任务部分组件
+ * 用于将任务组织成带标题和"查看全部"按钮的部分
+ */
+export function TaskSection({ title, children, onSeeAll }: TaskSectionProps) {
   return (
-    <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.title}>{title}</Text>
-        <TouchableOpacity onPress={onSeeAll}>
-          <Text style={styles.seeAllText}>查看全部</Text>
-        </TouchableOpacity>
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>{title}</Text>
+        {onSeeAll && (
+          <TouchableOpacity onPress={onSeeAll}>
+            <Text style={styles.seeAllText}>查看全部</Text>
+          </TouchableOpacity>
+        )}
       </View>
-      <View style={styles.content}>{children}</View>
+      <View style={styles.sectionContent}>{children}</View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  section: {
     marginBottom: 24,
   },
-  headerContainer: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
-  title: {
+  sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
   },
@@ -40,7 +46,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
-  content: {
-    marginTop: 4,
+  sectionContent: {
+    // 可添加额外样式
   },
-}); 
+});

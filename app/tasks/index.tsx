@@ -212,7 +212,7 @@ export default function TaskListScreen() {
             <View>
               {overdueTasks.length > 0 && (
                 <View style={styles.sectionContainer}>
-                  <TaskSection title="逾期" onSeeAll={() => console.log('See all overdue tasks')}>
+                  <TaskSection title="逾期" onSeeAll={() => console.log('查看所有逾期任务')}>
                     {overdueTasks.map((task) => (
                       <View key={task.id} style={styles.taskItemWrapper}>
                         <TaskItem
@@ -230,7 +230,7 @@ export default function TaskListScreen() {
 
               {pendingTasks.length > 0 && (
                 <View style={styles.sectionContainer}>
-                  <TaskSection title="待办" onSeeAll={() => console.log('See all pending tasks')}>
+                  <TaskSection title="待办" onSeeAll={() => console.log('查看所有待办任务')}>
                     {pendingTasks.map((task) => (
                       <View key={task.id} style={styles.taskItemWrapper}>
                         <TaskItem
@@ -248,7 +248,7 @@ export default function TaskListScreen() {
 
               {completedTasks.length > 0 && (
                 <View style={styles.sectionContainer}>
-                  <TaskSection title="已完成" onSeeAll={() => console.log('See all completed tasks')}>
+                  <TaskSection title="已完成" onSeeAll={() => console.log('查看所有已完成任务')}>
                     {completedTasks.map((task) => (
                       <View key={task.id} style={styles.taskItemWrapper}>
                         <TaskItem

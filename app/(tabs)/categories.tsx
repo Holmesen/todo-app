@@ -24,13 +24,13 @@ export default function CategoriesScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [deletingCategoryId, setDeletingCategoryId] = useState<number | null>(null);
 
-  // Get window width to calculate grid columns
+  // 获取窗口宽度以计算网格列数
   const numColumns = dimensions.width > 500 ? 3 : 2;
 
-  // Get the authenticated user
+  // 获取认证用户
   const { user } = useAuthStore();
 
-  // Get categories state and actions from category store
+  // 从分类存储中获取分类状态和操作
   const {
     featuredCategories,
     searchQuery,
@@ -44,7 +44,7 @@ export default function CategoriesScreen() {
     getFilteredCategories,
   } = useCategoryStore();
 
-  // Load categories on initial render
+  // 在初始渲染时加载分类
   useEffect(() => {
     if (user?.id) {
       fetchCategoriesWithStats();
@@ -52,42 +52,42 @@ export default function CategoriesScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  // Handle category selection
+  // 处理分类选择
   const handleCategoryPress = (category: CategoryWithStats) => {
-    // Navigate to the home tab with category filter
-    // Since there's no direct tasks route, use the index route with query params
+    // 导航到首页标签并带有分类过滤器
+    // 由于没有直接的任务路由，使用带查询参数的索引路由
     router.push({
       pathname: '/',
       params: { categoryId: category.id.toString() },
     });
   };
 
-  // Handle adding a new category
+  // 处理添加新分类
   const handleAddCategory = async (category: { name: string; color: string; icon: string; is_featured: boolean }) => {
     if (!user?.id) {
-      Alert.alert('Error', 'You must be logged in to add categories');
+      Alert.alert('错误', '您必须登录才能添加分类');
       return;
     }
 
-    // Add the user id
+    // 添加用户ID
     const newCategory = {
       ...category,
       user_id: Number(user.id),
     };
 
-    // Add to the store
+    // 添加到存储
     const result = await addCategory(newCategory);
 
     if (result) {
-      // Close the modal - only close on success
+      // 关闭模态框 - 仅在成功时关闭
       setModalVisible(false);
     } else {
-      // Error alert will be shown by the store through the error state
-      // We don't close the modal so the user can try again
+      // 错误提醒将通过存储中的错误状态显示
+      // 我们不关闭模态框，让用户可以重试
     }
   };
 
-  // Handle deleting a category
+  // 处理删除分类
   const handleDeleteCategory = async (category: CategoryWithStats) => {
     try {
       setDeletingCategoryId(category.id);
@@ -100,15 +100,15 @@ export default function CategoriesScreen() {
     }
   };
 
-  // Get filtered categories based on search
+  // 获取基于搜索的过滤分类
   const filteredCategories = getFilteredCategories();
 
-  // Render featured category item
+  // 渲染精选分类项
   const renderFeaturedItem = ({ item }: { item: CategoryWithStats }) => (
     <CategoryCard category={item} onPress={handleCategoryPress} />
   );
 
-  // Render category list item
+  // 渲染分类列表项
   const renderCategoryItem = ({ item }: { item: CategoryWithStats }) => (
     <CategoryListItem
       category={item}
@@ -124,8 +124,8 @@ export default function CategoriesScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Search bar */}
-      <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="Search categories..." />
+      {/* 搜索栏 */}
+      <SearchBar value={searchQuery} onChangeText={setSearchQuery} placeholder="搜索分类..." />
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -135,25 +135,25 @@ export default function CategoriesScreen() {
         <View style={styles.errorContainer}>
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryButton} onPress={fetchCategoriesWithStatsSync}>
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>重试</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <FlatList
           ListHeaderComponent={() => (
             <>
-              {/* Featured Categories Header */}
+              {/* 精选分类标题 */}
               {(featuredCategories.length > 0 || !searchQuery) && (
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Featured Categories</Text>
+                  <Text style={styles.sectionTitle}>精选分类</Text>
                   <TouchableOpacity style={styles.addButton} onPress={() => setModalVisible(true)} disabled={isSaving}>
                     <FontAwesome name="plus" size={14} style={styles.addIcon} />
-                    <Text style={styles.addButtonText}>Add</Text>
+                    <Text style={styles.addButtonText}>添加</Text>
                   </TouchableOpacity>
                 </View>
               )}
 
-              {/* Featured Categories Grid */}
+              {/* 精选分类网格 */}
               {featuredCategories.length > 0 ? (
                 <FlatList
                   data={
@@ -171,17 +171,15 @@ export default function CategoriesScreen() {
                 />
               ) : !searchQuery ? (
                 <View style={styles.emptyContainer}>
-                  <Text style={styles.emptyText}>No featured categories yet</Text>
+                  <Text style={styles.emptyText}>暂无精选分类</Text>
                 </View>
               ) : null}
 
-              {/* All Categories Header */}
+              {/* 所有分类标题 */}
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>All Categories</Text>
+                <Text style={styles.sectionTitle}>所有分类</Text>
                 {filteredCategories.length > 0 && (
-                  <Text style={styles.categoryCount}>
-                    {filteredCategories.length} {filteredCategories.length === 1 ? 'category' : 'categories'}
-                  </Text>
+                  <Text style={styles.categoryCount}>{`${filteredCategories.length}个分类`}</Text>
                 )}
               </View>
             </>
@@ -189,12 +187,12 @@ export default function CategoriesScreen() {
           ListEmptyComponent={() => (
             <View style={styles.emptyContainer}>
               {searchQuery ? (
-                <Text style={styles.emptyText}>No categories found for "{searchQuery}"</Text>
+                <Text style={styles.emptyText}>未找到与"{searchQuery}"匹配的分类</Text>
               ) : (
                 <>
-                  <Text style={styles.emptyText}>No categories found</Text>
+                  <Text style={styles.emptyText}>未找到分类</Text>
                   <TouchableOpacity style={styles.emptyButton} onPress={() => setModalVisible(true)}>
-                    <Text style={styles.emptyButtonText}>Create your first category</Text>
+                    <Text style={styles.emptyButtonText}>创建您的第一个分类</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -208,7 +206,7 @@ export default function CategoriesScreen() {
         />
       )}
 
-      {/* Add Category Modal */}
+      {/* 添加分类模态框 */}
       <AddCategoryModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}

@@ -57,7 +57,7 @@ export default function HomeScreen() {
     try {
       await Promise.all([refetchTasks(), refetchCategories()]);
     } catch (err) {
-      console.error('Refresh error:', err);
+      console.error('刷新错误:', err);
     } finally {
       setRefreshing(false);
     }

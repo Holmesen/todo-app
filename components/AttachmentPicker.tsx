@@ -1,18 +1,22 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 
 // 附件选择器属性接口
 interface AttachmentPickerProps {
   onPress: () => void;
 }
 
+/**
+ * 附件选择器组件
+ * 用于添加文件或图片等附件
+ */
 export function AttachmentPicker({ onPress }: AttachmentPickerProps) {
   return (
     <View style={styles.container}>
       <Text style={styles.label}>附件</Text>
-      <TouchableOpacity style={styles.button} onPress={onPress}>
-        <Ionicons name="attach" size={20} color="#007AFF" />
+      <TouchableOpacity style={styles.pickerButton} onPress={onPress}>
+        <FontAwesome name="paperclip" size={16} color="#8E8E93" style={styles.icon} />
         <Text style={styles.buttonText}>添加附件</Text>
       </TouchableOpacity>
     </View>
@@ -21,28 +25,26 @@ export function AttachmentPicker({ onPress }: AttachmentPickerProps) {
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
   label: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
-    color: '#3A3A3C',
     marginBottom: 8,
+    color: '#333333',
   },
-  button: {
+  pickerButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 12,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#007AFF',
+    backgroundColor: '#F2F2F7',
     borderRadius: 10,
-    backgroundColor: '#F0F7FF',
+    padding: 12,
+  },
+  icon: {
+    marginRight: 8,
   },
   buttonText: {
-    fontSize: 15,
-    color: '#007AFF',
-    marginLeft: 8,
+    fontSize: 16,
+    color: '#8E8E93',
   },
-}); 
+});

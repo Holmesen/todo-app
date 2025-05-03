@@ -1,104 +1,116 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 
-interface BarChartData {
+// 图表数据类型
+interface BarData {
   label: string;
   value: number;
-  date: string;
+  date?: string; // 可选的日期属性
 }
 
 interface BarChartProps {
-  data: BarChartData[];
-  height?: number;
-  barWidth?: number;
+  data: BarData[];
   barColor?: string;
+  barWidth?: number;
+  height?: number;
   maxValue?: number;
-  showGridLines?: boolean;
-  gridLineCount?: number;
+  showLabels?: boolean;
 }
 
-export const BarChart = ({
+/**
+ * 柱状图组件
+ * 用于显示与时间相关的数据统计
+ */
+export function BarChart({
   data,
-  height = 160,
-  barWidth = 12,
   barColor = '#007AFF',
-  maxValue: propMaxValue,
-  showGridLines = true,
-  gridLineCount = 4,
-}: BarChartProps) => {
-  // Calculate max value for chart
-  const maxValue = propMaxValue || Math.max(...data.map((item) => item.value), 1);
+  barWidth = 28,
+  height = 180,
+  maxValue,
+  showLabels = true,
+}: BarChartProps) {
+  // 确定Y轴最大值
+  const max = maxValue || Math.max(...data.map((item) => item.value), 1);
 
-  // Generate grid lines
-  const gridLines = [];
-  if (showGridLines) {
-    for (let i = 1; i <= gridLineCount; i++) {
-      const position = height - i * (height / gridLineCount);
-      gridLines.push(<View key={`grid-${i}`} style={[styles.gridLine, { top: position }]} />);
-    }
-  }
+  // 计算一个合理的最大值，使图表更美观
+  const chartMax = Math.ceil(max * 1.2);
 
   return (
-    <View style={styles.container}>
-      {/* Grid Lines */}
-      {gridLines}
+    <View style={[styles.container, { height }]}>
+      {/* Y轴标记 */}
+      <View style={styles.yAxis}>
+        <Text style={styles.yAxisLabel}>{chartMax}</Text>
+        <Text style={styles.yAxisLabel}>{Math.round(chartMax / 2)}</Text>
+        <Text style={styles.yAxisLabel}>0</Text>
+      </View>
 
-      {/* Bars */}
-      <View style={[styles.barContainer, { height }]}>
-        {data.map((item) => {
-          const barHeight = (item.value / maxValue) * height;
+      {/* 柱状图部分 */}
+      <View style={styles.chartArea}>
+        {data.map((item, index) => {
+          // 计算柱子高度
+          const barHeight = (item.value / chartMax) * (height - 40);
 
           return (
-            <View key={`bar-${item.date}`} style={styles.barWrapper}>
-              <View
-                style={[
-                  styles.bar,
-                  {
-                    height: Math.max(barHeight, 2), // Minimum bar height for visibility
-                    width: barWidth,
-                    backgroundColor: barColor,
-                  },
-                ]}
-              />
-              <Text style={styles.barLabel}>{item.label}</Text>
+            <View key={index} style={styles.barContainer}>
+              <View style={styles.barWrapper}>
+                <View
+                  style={[
+                    styles.bar,
+                    {
+                      height: Math.max(barHeight, 1), // 确保柱子至少有1点高
+                      backgroundColor: barColor,
+                      width: barWidth,
+                    },
+                  ]}
+                />
+              </View>
+              {showLabels && <Text style={styles.barLabel}>{item.label}</Text>}
             </View>
           );
         })}
       </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
-    position: 'relative',
-    marginTop: 10,
-    marginBottom: 30,
-  },
-  gridLine: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    height: 1,
-    backgroundColor: '#E5E5EA',
-  },
-  barContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-around',
     paddingVertical: 10,
   },
-  barWrapper: {
+  yAxis: {
+    width: 24,
+    height: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    paddingRight: 4,
+    paddingVertical: 4,
+  },
+  yAxisLabel: {
+    fontSize: 10,
+    color: '#8E8E93',
+  },
+  chartArea: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'flex-end',
+    height: '100%',
+  },
+  barContainer: {
     alignItems: 'center',
+  },
+  barWrapper: {
+    height: '100%',
     justifyContent: 'flex-end',
   },
   bar: {
-    borderRadius: 4,
-    backgroundColor: '#007AFF',
+    borderTopLeftRadius: 3,
+    borderTopRightRadius: 3,
   },
   barLabel: {
-    fontSize: 11,
+    fontSize: 10,
     color: '#8E8E93',
-    marginTop: 6,
+    marginTop: 4,
   },
 });

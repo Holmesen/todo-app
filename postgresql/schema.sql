@@ -279,7 +279,7 @@ INSERT INTO todo_categories (user_id, name, color, icon, is_featured) VALUES
 (1, '个人', '#30C48D', 'fa-user', TRUE),
 (1, '购物', '#FF9500', 'fa-shopping-cart', TRUE),
 (1, '健康', '#FF2D55', 'fa-heartbeat', TRUE),
-(1, '财务', '#007AFF', 'fa-dollar-sign', FALSE),
+(1, '财务', '#007AFF', 'fa-money', FALSE),
 (1, '教育', '#AF52DE', 'fa-book', FALSE);
 
 -- 创建索引以提高查询性能

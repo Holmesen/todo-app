@@ -1,23 +1,35 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
+import { FontAwesome } from '@expo/vector-icons';
 
 // 页面头部栏属性接口
 interface HeaderBarProps {
   title: string;
   showBackButton?: boolean;
+  showSaveButton?: boolean;
   onBack?: () => void;
   onSave?: () => void;
+  saveDisabled?: boolean;
+  rightElement?: React.ReactNode;
 }
 
+/**
+ * 页面头部组件
+ * 提供标题、返回按钮和可选的保存按钮
+ */
 export function HeaderBar({
   title,
   showBackButton = true,
+  showSaveButton = false,
   onBack,
   onSave,
+  saveDisabled = false,
+  rightElement,
 }: HeaderBarProps) {
-  // 处理返回操作
+  const router = useRouter();
+
+  // 处理返回按钮点击
   const handleBack = () => {
     if (onBack) {
       onBack();
@@ -28,22 +40,23 @@ export function HeaderBar({
 
   return (
     <View style={styles.container}>
-      <View style={styles.leftContainer}>
+      <View style={styles.leftSection}>
         {showBackButton && (
-          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
-            <Ionicons name="chevron-back" size={24} color="#007AFF" />
+          <TouchableOpacity style={styles.backButton} onPress={handleBack}>
+            <FontAwesome name="angle-left" size={24} color="#007AFF" />
           </TouchableOpacity>
         )}
       </View>
 
       <Text style={styles.title}>{title}</Text>
 
-      <View style={styles.rightContainer}>
-        {onSave && (
-          <TouchableOpacity onPress={onSave} style={styles.saveButton}>
-            <Text style={styles.saveButtonText}>保存</Text>
+      <View style={styles.rightSection}>
+        {showSaveButton && onSave && (
+          <TouchableOpacity style={styles.saveButton} onPress={onSave} disabled={saveDisabled}>
+            <Text style={[styles.saveButtonText, saveDisabled && styles.disabledSaveButtonText]}>保存</Text>
           </TouchableOpacity>
         )}
+        {rightElement}
       </View>
     </View>
   );
@@ -54,32 +67,35 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 16,
-    marginBottom: 20,
+    paddingVertical: 12,
+    marginBottom: 16,
   },
-  leftContainer: {
-    flex: 1,
+  leftSection: {
+    width: 60,
     alignItems: 'flex-start',
   },
-  rightContainer: {
+  title: {
+    fontSize: 17,
+    fontWeight: 'bold',
+    textAlign: 'center',
     flex: 1,
+  },
+  rightSection: {
+    width: 60,
     alignItems: 'flex-end',
   },
   backButton: {
     padding: 4,
   },
-  title: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#000000',
-    textAlign: 'center',
-  },
   saveButton: {
     padding: 4,
   },
   saveButtonText: {
-    fontSize: 17,
     color: '#007AFF',
+    fontSize: 16,
     fontWeight: '600',
   },
-}); 
+  disabledSaveButtonText: {
+    opacity: 0.5,
+  },
+});

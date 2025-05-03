@@ -35,7 +35,7 @@ export function useTasks(): UseTasksReturn {
     throw new Error('用户未认证');
   };
 
-  // Fetch tasks from Supabase
+  // 从Supabase获取任务
   const fetchTasks = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -43,7 +43,7 @@ export function useTasks(): UseTasksReturn {
     try {
       const userId = getUserId();
 
-      // Fetch tasks from Supabase
+      // 从Supabase获取任务
       const { data, error } = await supabase
         .from('todo_tasks')
         .select('*, category:todo_categories(name, color, icon)')
@@ -54,7 +54,7 @@ export function useTasks(): UseTasksReturn {
         throw error;
       }
 
-      // Convert DB format to app format
+      // 将数据库格式转换为应用格式
       const parsedTasks = data.map((task) => {
         try {
           return {
@@ -73,35 +73,35 @@ export function useTasks(): UseTasksReturn {
             updated_at: new Date(task.updated_at),
           } as Task;
         } catch (err) {
-          console.error('Error parsing task:', task, err);
+          console.error('解析任务时出错:', task, err);
           throw err;
         }
       });
 
       setTasks(parsedTasks);
 
-      // Initial filtering
+      // 初始过滤
       filterTasks(parsedTasks, 'all');
     } catch (err) {
-      console.error('Error fetching tasks:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load tasks');
+      console.error('获取任务时出错:', err);
+      setError(err instanceof Error ? err.message : '加载任务失败');
     } finally {
       setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Filter tasks based on active filter
+  // 根据活跃过滤器过滤任务
   const filterTasks = useCallback((taskList: Task[], filterId: string) => {
-    // Get today's date at midnight for comparing
+    // 获取今天午夜时间用于比较
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Get tomorrow's date for upcoming tasks
+    // 获取明天的日期用于即将到来的任务
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    // Get date 7 days from now for upcoming tasks
+    // 获取7天后的日期用于即将到来的任务
     const nextWeek = new Date(today);
     nextWeek.setDate(nextWeek.getDate() + 7);
 
@@ -109,11 +109,11 @@ export function useTasks(): UseTasksReturn {
 
     switch (filterId) {
       case 'all':
-        // All incomplete tasks
+        // 所有未完成的任务
         filtered = taskList.filter((task) => !task.completed);
         break;
       case 'today':
-        // Today's incomplete tasks
+        // 今天的未完成任务
         filtered = taskList.filter((task) => {
           const taskDate = new Date(task.date);
           taskDate.setHours(0, 0, 0, 0);
@@ -121,7 +121,7 @@ export function useTasks(): UseTasksReturn {
         });
         break;
       case 'upcoming':
-        // Upcoming incomplete tasks (next 7 days, excluding today)
+        // 即将到来的未完成任务（未来7天，不包括今天）
         filtered = taskList.filter((task) => {
           const taskDate = new Date(task.date);
           taskDate.setHours(0, 0, 0, 0);
@@ -129,11 +129,11 @@ export function useTasks(): UseTasksReturn {
         });
         break;
       case 'completed':
-        // Completed tasks
+        // 已完成的任务
         filtered = taskList.filter((task) => task.completed);
         break;
       default:
-        // If the filter is a category ID
+        // 如果过滤器是分类ID
         if (filterId) {
           filtered = taskList.filter((task) => !task.completed && task.category_id === filterId);
         } else {
@@ -144,22 +144,22 @@ export function useTasks(): UseTasksReturn {
     setFilteredTasks(filtered);
   }, []);
 
-  // Apply filters when tasks or active filter changes
+  // 当任务或活跃过滤器变化时应用过滤器
   useEffect(() => {
     filterTasks(tasks, activeFilter);
   }, [tasks, activeFilter, filterTasks]);
 
-  // Initial fetch
+  // 初始获取
   useEffect(() => {
     fetchTasks();
   }, [fetchTasks]);
 
-  // Set active filter
+  // 设置活跃过滤器
   const handleSetActiveFilter = useCallback((filterId: string) => {
     setActiveFilter(filterId);
   }, []);
 
-  // Create derived task lists
+  // 创建派生任务列表
   const todayTasks = tasks.filter((task) => {
     const taskDate = new Date(task.date);
     const today = new Date();

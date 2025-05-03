@@ -30,38 +30,38 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: '首页',
           tabBarIcon: ({ color, size }) => <FontAwesome name="home" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="categories"
         options={{
-          title: 'Categories',
+          title: '分类',
           tabBarIcon: ({ color, size }) => <FontAwesome name="folder" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="add-task"
         options={{
-          title: 'Add',
+          title: '添加',
           tabBarIcon: ({ color, size }) => <FontAwesome name="plus-circle" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="statistics"
         options={{
-          title: 'Stats',
+          title: '统计',
           tabBarIcon: ({ color, size }) => <FontAwesome name="bar-chart" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: '我的',
           tabBarIcon: ({ color, size }) => <FontAwesome name="user" size={size} color={color} />,
         }}
       />
     </Tabs>
   );
-} 
+}

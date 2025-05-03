@@ -9,7 +9,7 @@ import {
   TouchableWithoutFeedback,
   Switch,
   ScrollView,
-  ActivityIndicator
+  ActivityIndicator,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -25,14 +25,25 @@ const CATEGORY_COLORS = [
   '#ff3b30', // Urgent - Red
   '#ffcc00', // Entertainment - Yellow
   '#5856d6', // Travel - Purple
-  '#34c759'  // Projects - Green
+  '#34c759', // Projects - Green
 ];
 
 // Define common icons for categories with valid FontAwesome name values
 // These are all confirmed valid FontAwesome icon names
 type IconOption = {
-  name: 'briefcase' | 'user' | 'shopping-cart' | 'heartbeat' | 'money' | 'book' |
-  'bell' | 'plane' | 'film' | 'clipboard' | 'home' | 'tag';
+  name:
+    | 'briefcase'
+    | 'user'
+    | 'shopping-cart'
+    | 'heartbeat'
+    | 'money'
+    | 'book'
+    | 'bell'
+    | 'plane'
+    | 'film'
+    | 'clipboard'
+    | 'home'
+    | 'tag';
   label: string;
 };
 
@@ -48,7 +59,7 @@ const CATEGORY_ICONS: IconOption[] = [
   { name: 'film', label: 'Entertainment' },
   { name: 'clipboard', label: 'Projects' },
   { name: 'home', label: 'Home' },
-  { name: 'tag', label: 'Other' }
+  { name: 'tag', label: 'Other' },
 ];
 
 interface AddCategoryModalProps {
@@ -70,7 +81,7 @@ export function AddCategoryModal({ visible, onClose, onSave, isSaving = false }:
         name: name.trim(),
         color: selectedColor,
         icon: `fa-${selectedIcon}`,
-        is_featured: isFeatured
+        is_featured: isFeatured,
       });
       // 保存后表单重置将在成功保存和关闭模态框后在父组件调用 onClose 时执行
     }
@@ -102,39 +113,30 @@ export function AddCategoryModal({ visible, onClose, onSave, isSaving = false }:
   };
 
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={handleClose}
-    >
+    <Modal visible={visible} animationType="slide" transparent={true} onRequestClose={handleClose}>
       <TouchableWithoutFeedback onPress={handleClose}>
         <View style={styles.modalOverlay}>
-          <TouchableWithoutFeedback onPress={() => { }}>
+          <TouchableWithoutFeedback onPress={() => {}}>
             <View style={styles.modalContent}>
               <View style={styles.header}>
-                <Text style={styles.headerTitle}>Add Category</Text>
-                <TouchableOpacity
-                  onPress={handleClose}
-                  style={styles.closeButton}
-                  disabled={isSaving}
-                >
-                  <FontAwesome name="times" size={20} color={isSaving ? "#c7c7cc" : "#8e8e93"} />
+                <Text style={styles.headerTitle}>新增分类</Text>
+                <TouchableOpacity onPress={handleClose} style={styles.closeButton} disabled={isSaving}>
+                  <FontAwesome name="times" size={20} color={isSaving ? '#c7c7cc' : '#8e8e93'} />
                 </TouchableOpacity>
               </View>
 
               <ScrollView style={styles.formContainer}>
-                <Text style={styles.label}>Category Name</Text>
+                <Text style={styles.label}>名称</Text>
                 <TextInput
                   style={styles.input}
                   value={name}
                   onChangeText={setName}
-                  placeholder="Enter category name"
+                  placeholder="请输入分类名称"
                   autoCapitalize="words"
                   editable={!isSaving}
                 />
 
-                <Text style={styles.label}>Color</Text>
+                <Text style={styles.label}>颜色</Text>
                 <View style={styles.colorGrid}>
                   {CATEGORY_COLORS.map((color, index) => (
                     <TouchableOpacity
@@ -142,7 +144,7 @@ export function AddCategoryModal({ visible, onClose, onSave, isSaving = false }:
                       style={[
                         styles.colorItem,
                         { backgroundColor: color },
-                        selectedColor === color && styles.selectedItem
+                        selectedColor === color && styles.selectedItem,
                       ]}
                       onPress={() => handleColorSelect(color)}
                       disabled={isSaving}
@@ -150,7 +152,7 @@ export function AddCategoryModal({ visible, onClose, onSave, isSaving = false }:
                   ))}
                 </View>
 
-                <Text style={styles.label}>Icon</Text>
+                <Text style={styles.label}>图标</Text>
                 <View style={styles.iconGrid}>
                   {CATEGORY_ICONS.map((icon, index) => (
                     <TouchableOpacity
@@ -158,7 +160,7 @@ export function AddCategoryModal({ visible, onClose, onSave, isSaving = false }:
                       style={[
                         styles.iconItem,
                         selectedIcon === icon.name && styles.selectedIconItem,
-                        { borderColor: selectedColor }
+                        { borderColor: selectedColor },
                       ]}
                       onPress={() => handleIconSelect(icon.name)}
                       disabled={isSaving}
@@ -166,14 +168,14 @@ export function AddCategoryModal({ visible, onClose, onSave, isSaving = false }:
                       <FontAwesome
                         name={icon.name}
                         size={20}
-                        color={selectedIcon === icon.name ? selectedColor : "#666"}
+                        color={selectedIcon === icon.name ? selectedColor : '#666'}
                       />
                     </TouchableOpacity>
                   ))}
                 </View>
 
                 <View style={styles.switchContainer}>
-                  <Text style={styles.switchLabel}>Featured Category</Text>
+                  <Text style={styles.switchLabel}>精选分类</Text>
                   <Switch
                     value={isFeatured}
                     onValueChange={setIsFeatured}
@@ -189,7 +191,7 @@ export function AddCategoryModal({ visible, onClose, onSave, isSaving = false }:
                   style={[
                     styles.saveButton,
                     { backgroundColor: selectedColor },
-                    (!name.trim() || isSaving) && styles.saveButtonDisabled
+                    (!name.trim() || isSaving) && styles.saveButtonDisabled,
                   ]}
                   onPress={handleSave}
                   disabled={!name.trim() || isSaving}
@@ -197,10 +199,10 @@ export function AddCategoryModal({ visible, onClose, onSave, isSaving = false }:
                   {isSaving ? (
                     <View style={styles.loadingContainer}>
                       <ActivityIndicator color="#ffffff" size="small" />
-                      <Text style={styles.saveButtonText}>Saving...</Text>
+                      <Text style={styles.saveButtonText}>保存中...</Text>
                     </View>
                   ) : (
-                    <Text style={styles.saveButtonText}>Save Category</Text>
+                    <Text style={styles.saveButtonText}>保存分类</Text>
                   )}
                 </TouchableOpacity>
               </View>
@@ -330,5 +332,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-  }
+  },
 });

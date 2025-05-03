@@ -150,7 +150,7 @@ export default function AddTaskScreen() {
           }}
           showsVerticalScrollIndicator={false}
         >
-          <HeaderBar title="添加任务" onSave={handleSave} />
+          <HeaderBar title="添加任务" onSave={handleSave} showBackButton={false} />
 
           {/* 任务表单 */}
           <FormInput
@@ -220,8 +220,12 @@ export default function AddTaskScreen() {
 
           <View style={styles.formGroup}>
             <SubtaskList
-              subtasks={formData.subtasks}
-              onRemoveSubtask={handleRemoveSubtask}
+              subtasks={formData.subtasks.map((title, index) => ({
+                id: index,
+                title,
+                completed: false,
+              }))}
+              onRemoveSubtask={(id) => handleRemoveSubtask(id !== null ? (id as number) : 0)}
               onAddSubtask={handleAddSubtask}
             />
 

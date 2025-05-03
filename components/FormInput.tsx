@@ -7,38 +7,38 @@ interface FormInputProps extends TextInputProps {
   error?: string;
 }
 
-export function FormInput({ label, error, ...props }: FormInputProps) {
+/**
+ * 表单输入组件
+ * 带有标签和错误提示的文本输入框
+ */
+export function FormInput({ label, error, style, ...props }: FormInputProps) {
   return (
-    <View style={styles.formGroup}>
-      <Text style={styles.formLabel}>{label}</Text>
-      <TextInput
-        style={[styles.formInput, error && styles.inputError]}
-        placeholderTextColor="#8E8E93"
-        {...props}
-      />
+    <View style={styles.container}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput style={[styles.input, error && styles.inputError, style]} placeholderTextColor="#A0A0A0" {...props} />
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  formGroup: {
-    marginBottom: 20,
+  container: {
+    marginBottom: 16,
   },
-  formLabel: {
-    fontSize: 15,
+  label: {
+    fontSize: 16,
     fontWeight: '500',
-    color: '#3A3A3C',
     marginBottom: 8,
+    color: '#333333',
   },
-  formInput: {
-    width: '100%',
-    padding: 12,
-    borderRadius: 10,
+  input: {
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
     borderColor: '#D1D1D6',
+    borderRadius: 10,
+    padding: 12,
     fontSize: 16,
-    backgroundColor: '#FFFFFF',
+    color: '#000000',
   },
   inputError: {
     borderColor: '#FF3B30',
@@ -48,4 +48,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginTop: 4,
   },
-}); 
+});

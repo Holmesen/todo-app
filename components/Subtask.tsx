@@ -1,56 +1,94 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList } from 'react-native';
-import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { FontAwesome } from '@expo/vector-icons';
 
-// 子任务列表属性接口
-interface SubtaskListProps {
-  subtasks: string[];
-  onRemoveSubtask: (index: number) => void;
-  onAddSubtask: () => void;
+export interface Subtask {
+  id: number | null;
+  title: string;
+  completed: boolean;
 }
 
-// 子任务项组件
-function SubtaskItem({ title, onRemove }: { title: string; onRemove: () => void }) {
+interface SubtaskItemProps {
+  subtask: Subtask;
+  onToggle: (id: number | null) => void;
+  onRemove: (id: number | null) => void;
+}
+
+/**
+ * 单个子任务项组件
+ */
+function SubtaskItem({ subtask, onToggle, onRemove }: SubtaskItemProps) {
   return (
     <View style={styles.subtaskItem}>
-      <View style={styles.subtaskContent}>
-        <MaterialIcons name="check-box-outline-blank" size={20} color="#007AFF" />
-        <Text style={styles.subtaskText}>{title}</Text>
-      </View>
-      <TouchableOpacity onPress={onRemove} style={styles.removeButton}>
-        <MaterialIcons name="delete-outline" size={20} color="#FF3B30" />
+      <TouchableOpacity style={styles.checkbox} onPress={() => onToggle(subtask.id)}>
+        {subtask.completed ? (
+          <FontAwesome name="check-square-o" size={20} color="#007AFF" />
+        ) : (
+          <FontAwesome name="square-o" size={20} color="#8E8E93" />
+        )}
+      </TouchableOpacity>
+
+      <Text style={[styles.subtaskTitle, subtask.completed && styles.completedSubtaskTitle]}>{subtask.title}</Text>
+
+      <TouchableOpacity style={styles.removeButton} onPress={() => onRemove(subtask.id)}>
+        <FontAwesome name="times" size={16} color="#8E8E93" />
       </TouchableOpacity>
     </View>
   );
 }
 
-// 子任务列表组件
-export function SubtaskList({ subtasks, onRemoveSubtask, onAddSubtask }: SubtaskListProps) {
+interface SubtaskListProps {
+  subtasks: Subtask[];
+  onRemoveSubtask: (id: number | null) => void;
+  onAddSubtask: () => void;
+  onToggleSubtask?: (id: number | null) => void;
+}
+
+/**
+ * 子任务列表组件
+ * 显示子任务列表及添加子任务的功能
+ */
+export function SubtaskList({ subtasks, onRemoveSubtask, onAddSubtask, onToggleSubtask }: SubtaskListProps) {
+  // 处理子任务状态切换
+  const handleToggle = (id: number | null) => {
+    if (onToggleSubtask) {
+      onToggleSubtask(id);
+    }
+  };
+
+  // 处理子任务删除
+  const handleRemove = (id: number | null) => {
+    Alert.alert('确认删除', '您确定要删除这个子任务吗？', [
+      {
+        text: '取消',
+        style: 'cancel',
+      },
+      {
+        text: '删除',
+        onPress: () => onRemoveSubtask(id),
+        style: 'destructive',
+      },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.header}>子任务</Text>
+      <View style={styles.header}>
+        <Text style={styles.title}>子任务</Text>
         <TouchableOpacity onPress={onAddSubtask} style={styles.addButton}>
-          <Ionicons name="add-circle-outline" size={20} color="#007AFF" />
-          <Text style={styles.addButtonText}>添加子任务</Text>
+          <FontAwesome name="plus" size={14} style={styles.addIcon} />
+          <Text style={styles.addButtonText}>添加</Text>
         </TouchableOpacity>
       </View>
 
-      {subtasks.length > 0 ? (
-        <FlatList
-          data={subtasks}
-          keyExtractor={(item, index) => `subtask-${index}`}
-          renderItem={({ item, index }) => (
-            <SubtaskItem
-              title={item}
-              onRemove={() => onRemoveSubtask(index)}
-            />
-          )}
-          style={styles.list}
-          scrollEnabled={false}
-        />
-      ) : (
+      {subtasks.length === 0 ? (
         <Text style={styles.emptyText}>没有子任务</Text>
+      ) : (
+        <View style={styles.subtaskList}>
+          {subtasks.map((subtask, index) => (
+            <SubtaskItem key={index} subtask={subtask} onToggle={handleToggle} onRemove={handleRemove} />
+          ))}
+        </View>
       )}
     </View>
   );
@@ -58,58 +96,60 @@ export function SubtaskList({ subtasks, onRemoveSubtask, onAddSubtask }: Subtask
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  headerContainer: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 12,
   },
-  header: {
-    fontSize: 15,
+  title: {
+    fontSize: 16,
     fontWeight: '500',
-    color: '#3A3A3C',
+    color: '#333333',
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  addButtonText: {
-    fontSize: 14,
+  addIcon: {
     color: '#007AFF',
-    marginLeft: 4,
+    marginRight: 4,
   },
-  list: {
-    marginTop: 4,
+  addButtonText: {
+    color: '#007AFF',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  emptyText: {
+    color: '#8E8E93',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  subtaskList: {
+    marginTop: 8,
   },
   subtaskItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#E5E5EA',
   },
-  subtaskContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
+  checkbox: {
+    marginRight: 10,
   },
-  subtaskText: {
-    fontSize: 15,
-    color: '#000000',
-    marginLeft: 10,
+  subtaskTitle: {
     flex: 1,
+    fontSize: 16,
+  },
+  completedSubtaskTitle: {
+    textDecorationLine: 'line-through',
+    color: '#8E8E93',
   },
   removeButton: {
-    padding: 4,
+    padding: 8,
   },
-  emptyText: {
-    fontSize: 14,
-    color: '#8E8E93',
-    fontStyle: 'italic',
-    marginTop: 4,
-    marginBottom: 8,
-  },
-}); 
+});
