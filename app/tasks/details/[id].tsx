@@ -17,7 +17,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { supabase } from '@/lib/supabase';
 
 // Import taskService and types
-import { taskService, TaskWithRelations } from '@/services/taskService';
+import { taskService, TaskWithRelations, ReminderType } from '@/services/taskService';
 // Import TaskEditForm component
 import TaskEditForm from '@/components/TaskEditForm';
 
@@ -90,6 +90,28 @@ export default function TaskDetailScreen() {
     }
   };
 
+  // 获取提醒类型的本地化文本
+  const getReminderText = (reminderType: ReminderType | null): string => {
+    if (!reminderType || reminderType === 'none') return '无提醒';
+
+    switch (reminderType) {
+      case 'at_time':
+        return '准时提醒';
+      case '5_min_before':
+        return '提前 5 分钟';
+      case '15_min_before':
+        return '提前 15 分钟';
+      case '30_min_before':
+        return '提前 30 分钟';
+      case '1_hour_before':
+        return '提前 1 小时';
+      case '1_day_before':
+        return '提前 1 天';
+      default:
+        return '未知提醒类型';
+    }
+  };
+
   // 计算提醒时间
   const computedReminderTime = (task: Partial<TaskWithRelations>) => {
     let reminderTime: Date | null = null;
@@ -142,7 +164,6 @@ export default function TaskDetailScreen() {
         priority: updatedTask.priority!,
         date: updatedTask.date!,
         time: updatedTask.time || null,
-        reminder: computedReminderTime(updatedTask)?.toISOString() || null,
       };
 
       // Update task in Supabase
@@ -377,6 +398,63 @@ export default function TaskDetailScreen() {
     );
   }
 
+  function validIconName(name?: string): string {
+    if (!name) return 'folder';
+
+    // 这是FontAwesome图标库中常用的图标列表，可根据需要扩展
+    const validIcons = [
+      'home',
+      'book',
+      'bookmark',
+      'briefcase',
+      'calendar',
+      'check',
+      'circle',
+      'clock-o',
+      'cog',
+      'envelope',
+      'heart',
+      'heartbeat',
+      'list',
+      'map-marker',
+      'money',
+      'pencil',
+      'phone',
+      'picture-o',
+      'plus',
+      'search',
+      'shopping-cart',
+      'star',
+      'trash',
+      'user',
+      'users',
+      'briefcase',
+      'graduation-cap',
+      'money',
+      'medkit',
+      'cutlery',
+      'car',
+      'plane',
+      'laptop',
+      'music',
+      'film',
+      'gamepad',
+      'gift',
+      'leaf',
+      'sun-o',
+      'moon-o',
+      'coffee',
+      'shopping-bag',
+      'tag',
+    ];
+
+    const names = name.split('-');
+    const pre = names.length > 1 ? names[0] + '-' : '';
+
+    const isValidIcon = validIcons.includes(name.substring(pre.length));
+    return isValidIcon ? name.substring(pre.length) : 'folder';
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar style="dark" />
@@ -424,14 +502,19 @@ export default function TaskDetailScreen() {
           <View style={styles.taskMeta}>
             {task.category && (
               <View style={styles.metaItem}>
-                <FontAwesome name="folder" size={14} color="#007aff" style={styles.metaIcon} />
-                <Text style={styles.metaText}>{task.category}</Text>
+                <FontAwesome
+                  name={validIconName(task.category_icon) as any}
+                  size={14}
+                  color={task.category_color || '#007aff'}
+                  style={styles.metaIcon}
+                />
+                <Text style={[styles.metaText, { color: task.category_color || '#8E8E93' }]}>{task.category}</Text>
               </View>
             )}
             {task.reminder && (
               <View style={styles.metaItem}>
                 <FontAwesome name="bell" size={14} color="#007aff" style={styles.metaIcon} />
-                <Text style={styles.metaText}>{task.reminder}</Text>
+                <Text style={styles.metaText}>{getReminderText(task.reminder as ReminderType)}</Text>
               </View>
             )}
           </View>
@@ -655,7 +738,6 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 14,
-    color: '#8E8E93',
   },
   sectionTitle: {
     fontWeight: '600',

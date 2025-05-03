@@ -45,7 +45,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
   const [categoryId, setCategoryId] = useState<number | string | null>(task.category_id);
   const [date, setDate] = useState(task.date);
   const [time, setTime] = useState(task.time ? new Date(`2000-01-01T${task.time}`) : null);
-  const [reminder, setReminder] = useState(task.reminder || 'none');
+  const [reminder, setReminder] = useState<ReminderType>((task.reminder as ReminderType) || 'none');
   const [subtasks, setSubtasks] = useState<SubtaskInput[]>(
     task.subtasks?.map((st) => ({
       id: st.id,
@@ -65,23 +65,12 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
   const REMINDERS = [
     { label: '无', value: 'none' },
     { label: '任务时间', value: 'at_time' },
-    { label: '提前5分钟', value: '5min' },
-    { label: '提前15分钟', value: '15min' },
-    { label: '提前30分钟', value: '30min' },
-    { label: '提前1小时', value: '1hour' },
-    { label: '提前1天', value: '1day' },
+    { label: '提前5分钟', value: '5_min_before' },
+    { label: '提前15分钟', value: '15_min_before' },
+    { label: '提前30分钟', value: '30_min_before' },
+    { label: '提前1小时', value: '1_hour_before' },
+    { label: '提前1天', value: '1_day_before' },
   ];
-
-  // 从UI提醒值映射到数据库提醒类型
-  const reminderTypeMap: Record<string, ReminderType> = {
-    none: 'none',
-    at_time: 'at_time',
-    '5min': '5_min_before',
-    '15min': '15_min_before',
-    '30min': '30_min_before',
-    '1hour': '1_hour_before',
-    '1day': '1_day_before',
-  };
 
   useEffect(() => {
     fetchCategories();
@@ -185,7 +174,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
       category_id: categoryId ? String(categoryId) : null,
       date,
       time: timeString,
-      reminder: reminderTypeMap[reminder] || 'none',
+      reminder: reminder as ReminderType,
       subtasks: [
         // 已有子任务保留ID
         ...existingSubtasks.map((st) => ({
@@ -314,7 +303,7 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
           <View style={styles.pickerContainer}>
             <Picker
               selectedValue={reminder}
-              onValueChange={(itemValue) => setReminder(itemValue as string)}
+              onValueChange={(itemValue) => setReminder(itemValue as ReminderType)}
               style={styles.picker}
             >
               {REMINDERS.map((item) => (

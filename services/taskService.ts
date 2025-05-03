@@ -166,6 +166,8 @@ export const TaskWithRelationsSchema = TaskSchema.extend({
       })
     )
     .optional(),
+  category_icon: z.string().optional(),
+  category_color: z.string().optional(),
 });
 
 // 应用程序中使用的类型
@@ -456,6 +458,24 @@ class TaskService {
   }
 
   /**
+   * 获取任务的提醒设置
+   * @param taskId 任务ID
+   * @returns 提醒设置或null
+   */
+  async getTaskReminders(taskId: string | number): Promise<Reminder | null> {
+    try {
+      const { data, error } = await supabase.from('todo_reminders').select('*').eq('task_id', taskId).maybeSingle();
+
+      if (error) throw error;
+
+      return data as Reminder | null;
+    } catch (error) {
+      console.error('获取任务提醒设置出错:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get a task by ID
    * @param taskId Task ID
    * @returns Task with relations or null
@@ -491,6 +511,9 @@ class TaskService {
         console.error('Error fetching attachments:', attachmentsError);
       }
 
+      // 获取任务提醒设置
+      const reminderData = await this.getTaskReminders(taskId);
+
       // Transform DB data to app format
       const transformedTask = {
         id: taskData.id.toString(),
@@ -499,9 +522,11 @@ class TaskService {
         priority: taskData.priority,
         category: taskData.category?.name || null,
         category_id: taskData.category_id?.toString() || null,
+        category_icon: taskData.category?.icon || 'folder',
+        category_color: taskData.category?.color || '#007aff',
         date: new Date(taskData.due_date),
         time: taskData.due_time,
-        reminder: taskData.reminder_time ? new Date(taskData.reminder_time).toISOString() : null,
+        reminder: reminderData ? reminderData.reminder_type : null,
         completed: taskData.status === 'completed',
         user_id: taskData.user_id.toString(),
         created_at: new Date(taskData.created_at),

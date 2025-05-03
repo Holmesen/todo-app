@@ -16,7 +16,7 @@ interface CategoryIconProps {
  */
 export function CategoryIcon({ name, color, size = 24, showBackground = true, style }: CategoryIconProps) {
   // 确保图标名称有效，如果无效则使用默认图标
-  const iconName = isValidIconName(name);
+  const iconName = validIconName(name);
 
   return (
     <View
@@ -39,8 +39,8 @@ export function CategoryIcon({ name, color, size = 24, showBackground = true, st
   );
 }
 
-// 检查图标名称是否有效
-function isValidIconName(name: string | null): string {
+// 图标名称
+function validIconName(name: string | null): string {
   if (!name) return 'bookmark';
 
   // 这是FontAwesome图标库中常用的图标列表，可根据需要扩展
