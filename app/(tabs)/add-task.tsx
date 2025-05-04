@@ -71,6 +71,7 @@ type CategoryOptions = {
   label: string;
   value: string;
   color: string;
+  icon: string;
 };
 
 export default function AddTaskScreen() {
@@ -110,6 +111,7 @@ export default function AddTaskScreen() {
         value: category.id?.toString() || '',
         // 可以添加颜色信息用于UI展示
         color: category.color,
+        icon: category.icon!,
       }))
     );
   }, [categories]);

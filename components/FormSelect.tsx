@@ -7,6 +7,7 @@ interface SelectItem {
   label: string;
   value: string;
   color?: string;
+  icon?: string;
 }
 
 interface FormSelectProps {
@@ -64,7 +65,7 @@ export function FormSelect({
     <View style={[styles.androidPickerContainer, error && styles.selectButtonError]}>
       <Picker selectedValue={value} onValueChange={onValueChange} style={styles.androidPicker} enabled={!isLoading}>
         {items.map((item) => (
-          <Picker.Item key={item.value} label={item.label} value={item.value} />
+          <Picker.Item key={item.value} label={item.label} value={item.value} color={item.color} />
         ))}
       </Picker>
       {children}
@@ -94,7 +95,7 @@ export function FormSelect({
             enabled={!isLoading}
           >
             {items.map((item) => (
-              <Picker.Item key={item.value} label={item.label} value={item.value} />
+              <Picker.Item key={item.value} label={item.label} value={item.value} color={item.color} />
             ))}
           </Picker>
         </View>

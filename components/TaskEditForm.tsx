@@ -257,7 +257,12 @@ const TaskEditForm: React.FC<TaskEditFormProps> = ({ task, onSave, onCancel, isS
             >
               <Picker.Item label="无分类" value={null} />
               {categoryOptions.map((category) => (
-                <Picker.Item key={category.value} label={category.label} value={category.value} />
+                <Picker.Item
+                  key={category.value}
+                  label={category.label}
+                  value={category.value}
+                  color={category.color}
+                />
               ))}
             </Picker>
           </View>
