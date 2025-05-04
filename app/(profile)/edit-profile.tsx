@@ -11,16 +11,29 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/authStore';
 import { supabase } from '@/lib/supabase';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { Picker } from '@react-native-picker/picker';
 import * as FileSystem from 'expo-file-system';
 import { decode } from 'base64-arraybuffer';
+import { z } from 'zod';
 
+// 表单验证模式
+const profileSchema = z.object({
+  username: z.string().min(2, { message: '用户名至少需要2个字符' }).max(50),
+  email: z.string().email({ message: '请输入有效的电子邮箱地址' }),
+  full_name: z.string().optional(),
+  time_zone: z.string(),
+  theme: z.string(),
+  profile_image: z.string(),
+});
+
+// 数据接口
 interface UserData {
   username: string;
   email: string;
@@ -30,7 +43,7 @@ interface UserData {
   theme: string;
 }
 
-// Time zone options
+// 时区选项
 const timeZoneOptions = [
   { label: 'UTC-12:00', value: 'UTC-12' },
   { label: 'UTC-11:00', value: 'UTC-11' },
@@ -60,7 +73,7 @@ const timeZoneOptions = [
   { label: 'UTC+12:00', value: 'UTC+12' },
 ];
 
-// Theme options
+// 主题选项
 const themeOptions = [
   { label: '浅色', value: 'light' },
   { label: '深色', value: 'dark' },
@@ -71,6 +84,7 @@ export default function EditProfileScreen() {
   const { user, updateUser } = useAuthStore();
   const router = useRouter();
 
+  // 表单数据
   const [formData, setFormData] = useState<UserData>({
     username: '',
     email: '',
@@ -80,12 +94,17 @@ export default function EditProfileScreen() {
     theme: 'light',
   });
 
+  // 状态管理
   const [isSaving, setIsSaving] = useState(false);
-  const [showTimeZonePicker, setShowTimeZonePicker] = useState(false);
-  const [showThemePicker, setShowThemePicker] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [imageChanged, setImageChanged] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  // Load user data on component mount
+  // 模态框状态
+  const [isTimeZoneModalVisible, setTimeZoneModalVisible] = useState(false);
+  const [isThemeModalVisible, setThemeModalVisible] = useState(false);
+
+  // 加载用户数据
   useEffect(() => {
     if (!user) {
       router.replace('/profile');
@@ -96,21 +115,33 @@ export default function EditProfileScreen() {
       username: user.username || '',
       email: user.email || '',
       full_name: user.full_name || '',
-      profile_image: user.profile_image || `https://ui-avatars.com/api/?name=${user.full_name || 'User'}`,
+      profile_image:
+        user.profile_image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.full_name || 'User')}`,
       time_zone: user.time_zone || 'UTC+0',
       theme: user.theme || 'light',
     });
+
+    setIsLoading(false);
   }, [user, router]);
 
-  // Form field change handler
+  // 表单字段变更处理
   const handleChange = (field: keyof UserData, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
     }));
+
+    // 清除相关字段的验证错误
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
-  // Image picker handler
+  // 图片选择处理
   const handlePickImage = async () => {
     try {
       const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -121,7 +152,7 @@ export default function EditProfileScreen() {
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
         aspect: [1, 1],
         quality: 0.7,
@@ -142,7 +173,7 @@ export default function EditProfileScreen() {
     }
   };
 
-  // Convert URI to base64 for Supabase storage
+  // URI 转 Base64
   const uriToBase64 = async (uri: string) => {
     try {
       const base64 = await FileSystem.readAsStringAsync(uri, {
@@ -155,7 +186,7 @@ export default function EditProfileScreen() {
     }
   };
 
-  // Upload image to Supabase Storage
+  // 上传图片到 Supabase Storage
   const uploadImage = async (uri: string): Promise<string> => {
     try {
       if (!user?.id) throw new Error('用户未登录');
@@ -180,7 +211,27 @@ export default function EditProfileScreen() {
     }
   };
 
-  // Form submission handler
+  // 验证表单数据
+  const validateForm = (): boolean => {
+    try {
+      profileSchema.parse(formData);
+      setValidationErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          if (err.path[0]) {
+            errors[err.path[0] as string] = err.message;
+          }
+        });
+        setValidationErrors(errors);
+      }
+      return false;
+    }
+  };
+
+  // 表单提交处理
   const handleSubmit = async () => {
     try {
       if (!user?.id) {
@@ -188,26 +239,20 @@ export default function EditProfileScreen() {
         return;
       }
 
-      // Simple validation
-      if (!formData.username.trim()) {
-        Alert.alert('错误', '用户名不能为空。');
-        return;
-      }
-
-      if (!formData.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        Alert.alert('错误', '请输入有效的电子邮箱地址。');
+      // 表单验证
+      if (!validateForm()) {
         return;
       }
 
       setIsSaving(true);
 
-      // Handle image upload if changed
+      // 处理图片上传
       let profileImageUrl = formData.profile_image;
       if (imageChanged && !formData.profile_image.startsWith('http')) {
         profileImageUrl = await uploadImage(formData.profile_image);
       }
 
-      // Update user data in Supabase
+      // 更新用户数据
       const updateData = {
         username: formData.username,
         email: formData.email,
@@ -222,7 +267,7 @@ export default function EditProfileScreen() {
 
       if (error) throw error;
 
-      // Update local user state
+      // 更新本地用户状态
       updateUser({
         ...user,
         ...updateData,
@@ -237,10 +282,31 @@ export default function EditProfileScreen() {
     }
   };
 
+  // 选择时区
+  const selectTimeZone = (value: string) => {
+    handleChange('time_zone', value);
+    setTimeZoneModalVisible(false);
+  };
+
+  // 选择主题
+  const selectTheme = (value: string) => {
+    handleChange('theme', value);
+    setThemeModalVisible(false);
+  };
+
+  // 渲染加载状态
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007aff" />
+      </View>
+    );
+  }
+
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <ScrollView style={styles.container}>
-        {/* Header */}
+        {/* 页头 */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <FontAwesome name="arrow-left" size={20} color="#007aff" />
@@ -255,7 +321,7 @@ export default function EditProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Profile Image */}
+        {/* 个人头像 */}
         <View style={styles.imageContainer}>
           <Image source={{ uri: formData.profile_image }} style={styles.profileImage} />
           <TouchableOpacity onPress={handlePickImage} style={styles.editImageButton}>
@@ -263,34 +329,36 @@ export default function EditProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Form Fields */}
+        {/* 表单区域 */}
         <View style={styles.formContainer}>
-          {/* Username */}
+          {/* 用户名 */}
           <View style={styles.formField}>
             <Text style={styles.label}>用户名*</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, validationErrors.username && styles.inputError]}
               value={formData.username}
               onChangeText={(value) => handleChange('username', value)}
               placeholder="输入用户名"
               autoCapitalize="none"
             />
+            {validationErrors.username && <Text style={styles.errorText}>{validationErrors.username}</Text>}
           </View>
 
-          {/* Email */}
+          {/* 电子邮箱 */}
           <View style={styles.formField}>
             <Text style={styles.label}>电子邮箱*</Text>
             <TextInput
-              style={styles.input}
+              style={[styles.input, validationErrors.email && styles.inputError]}
               value={formData.email}
               onChangeText={(value) => handleChange('email', value)}
               placeholder="输入电子邮箱"
               autoCapitalize="none"
               keyboardType="email-address"
             />
+            {validationErrors.email && <Text style={styles.errorText}>{validationErrors.email}</Text>}
           </View>
 
-          {/* Full Name */}
+          {/* 全名 */}
           <View style={styles.formField}>
             <Text style={styles.label}>全名</Text>
             <TextInput
@@ -301,66 +369,104 @@ export default function EditProfileScreen() {
             />
           </View>
 
-          {/* Time Zone */}
+          {/* 时区 */}
           <View style={styles.formField}>
             <Text style={styles.label}>时区</Text>
-            <TouchableOpacity style={styles.pickerButton} onPress={() => setShowTimeZonePicker(!showTimeZonePicker)}>
+            <TouchableOpacity style={styles.pickerButton} onPress={() => setTimeZoneModalVisible(true)}>
               <Text style={styles.pickerButtonText}>
                 {timeZoneOptions.find((tz) => tz.value === formData.time_zone)?.label || formData.time_zone}
               </Text>
-              <FontAwesome name={showTimeZonePicker ? 'chevron-up' : 'chevron-down'} size={14} color="#8e8e93" />
+              <FontAwesome name="chevron-down" size={14} color="#8e8e93" />
             </TouchableOpacity>
-
-            {showTimeZonePicker && (
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={formData.time_zone}
-                  onValueChange={(value) => {
-                    handleChange('time_zone', value);
-                    setShowTimeZonePicker(false);
-                  }}
-                  style={styles.picker}
-                >
-                  {timeZoneOptions.map((option) => (
-                    <Picker.Item key={option.value} label={option.label} value={option.value} />
-                  ))}
-                </Picker>
-              </View>
-            )}
           </View>
 
-          {/* Theme */}
+          {/* 主题 */}
           <View style={styles.formField}>
             <Text style={styles.label}>主题</Text>
-            <TouchableOpacity style={styles.pickerButton} onPress={() => setShowThemePicker(!showThemePicker)}>
+            <TouchableOpacity style={styles.pickerButton} onPress={() => setThemeModalVisible(true)}>
               <Text style={styles.pickerButtonText}>
                 {themeOptions.find((t) => t.value === formData.theme)?.label || '浅色'}
               </Text>
-              <FontAwesome name={showThemePicker ? 'chevron-up' : 'chevron-down'} size={14} color="#8e8e93" />
+              <FontAwesome name="chevron-down" size={14} color="#8e8e93" />
             </TouchableOpacity>
-
-            {showThemePicker && (
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={formData.theme}
-                  onValueChange={(value) => {
-                    handleChange('theme', value);
-                    setShowThemePicker(false);
-                  }}
-                  style={styles.picker}
-                >
-                  {themeOptions.map((option) => (
-                    <Picker.Item key={option.value} label={option.label} value={option.value} />
-                  ))}
-                </Picker>
-              </View>
-            )}
           </View>
         </View>
 
-        {/* Note */}
+        {/* 备注 */}
         <Text style={styles.note}>* 标记为必填字段</Text>
       </ScrollView>
+
+      {/* 时区选择模态框 */}
+      <Modal
+        visible={isTimeZoneModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setTimeZoneModalVisible(false)}
+      >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setTimeZoneModalVisible(false)}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>选择时区</Text>
+              <TouchableOpacity onPress={() => setTimeZoneModalVisible(false)}>
+                <FontAwesome name="times" size={20} color="#007aff" />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={timeZoneOptions}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.modalItem, formData.time_zone === item.value && styles.modalItemSelected]}
+                  onPress={() => selectTimeZone(item.value)}
+                >
+                  <Text
+                    style={[styles.modalItemText, formData.time_zone === item.value && styles.modalItemTextSelected]}
+                  >
+                    {item.label}
+                  </Text>
+                  {formData.time_zone === item.value && <FontAwesome name="check" size={16} color="#007aff" />}
+                </TouchableOpacity>
+              )}
+              style={styles.modalList}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* 主题选择模态框 */}
+      <Modal
+        visible={isThemeModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setThemeModalVisible(false)}
+      >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setThemeModalVisible(false)}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>选择主题</Text>
+              <TouchableOpacity onPress={() => setThemeModalVisible(false)}>
+                <FontAwesome name="times" size={20} color="#007aff" />
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              data={themeOptions}
+              keyExtractor={(item) => item.value}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[styles.modalItem, formData.theme === item.value && styles.modalItemSelected]}
+                  onPress={() => selectTheme(item.value)}
+                >
+                  <Text style={[styles.modalItemText, formData.theme === item.value && styles.modalItemTextSelected]}>
+                    {item.label}
+                  </Text>
+                  {formData.theme === item.value && <FontAwesome name="check" size={16} color="#007aff" />}
+                </TouchableOpacity>
+              )}
+              style={styles.modalList}
+            />
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -368,6 +474,12 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#f2f2f7',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#f2f2f7',
   },
   header: {
@@ -378,6 +490,8 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 16,
     backgroundColor: '#ffffff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5ea',
   },
   backButton: {
     padding: 8,
@@ -444,6 +558,15 @@ const styles = StyleSheet.create({
     color: '#000000',
     paddingVertical: 8,
   },
+  inputError: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#ff3b30',
+  },
+  errorText: {
+    color: '#ff3b30',
+    fontSize: 12,
+    marginTop: 4,
+  },
   pickerButton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -454,19 +577,60 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#000000',
   },
-  pickerContainer: {
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5ea',
-    marginTop: 4,
-  },
-  picker: {
-    width: '100%',
-  },
   note: {
     paddingHorizontal: 16,
     paddingVertical: 12,
     color: '#8e8e93',
     fontSize: 14,
     marginBottom: 20,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    paddingTop: 12,
+    paddingBottom: Platform.OS === 'ios' ? 34 : 20,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5ea',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  modalList: {
+    maxHeight: 300,
+  },
+  modalItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e5ea',
+  },
+  modalItemSelected: {
+    backgroundColor: '#f0f0f5',
+  },
+  modalItemText: {
+    fontSize: 16,
+    color: '#000000',
+  },
+  modalItemTextSelected: {
+    color: '#007aff',
+    fontWeight: '500',
   },
 });
