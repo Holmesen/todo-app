@@ -347,6 +347,9 @@ export default function ProfileScreen() {
           title="评价应用"
           description="分享您的反馈"
           rightElement={<ChevronItem />}
+          onpress={() => {
+            router.push('/(profile)/rate-app');
+          }}
         />
       </View>
 

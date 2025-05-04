@@ -1,4 +1,4 @@
-# 📝 TodoMaster 待办事项应用
+# 📝 TaskMaster 待办事项应用
 
 一个使用 React Native、Expo 和 Supabase 构建的美观且功能强大的待办事项应用。
 
@@ -94,7 +94,7 @@ yarn start
 ```typescript
 // app/config/app-info.ts 示例
 export const APP_INFO = {
-  NAME: 'TodoMaster',
+  NAME: 'TaskMaster',
   VERSION: '2.1.0',
   BUILD_NUMBER: '210',
   // ... 其他配置
@@ -120,7 +120,7 @@ todo-app/
 
 ## 🔒 数据库设计
 
-TodoMaster 应用使用 PostgreSQL 数据库（通过 Supabase 提供），具有以下主要特性：
+TaskMaster 应用使用 PostgreSQL 数据库（通过 Supabase 提供），具有以下主要特性：
 
 - **枚举类型**: 用于任务优先级、状态和操作类型
 - **JSONB 数据类型**: 存储活动日志的详细信息

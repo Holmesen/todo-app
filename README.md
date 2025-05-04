@@ -1,4 +1,4 @@
-# 📝 TodoMaster
+# 📝 TaskMaster
 
 A beautiful and functional Todo application built with React Native, Expo, and Supabase.
 
@@ -94,7 +94,7 @@ To update app information, simply modify this configuration file, and changes wi
 ```typescript
 // Example of app/config/app-info.ts
 export const APP_INFO = {
-  NAME: 'TodoMaster',
+  NAME: 'TaskMaster',
   VERSION: '2.1.0',
   BUILD_NUMBER: '210',
   // ... other configuration
@@ -120,7 +120,7 @@ todo-app/
 
 ## 🔒 Database Design
 
-The TodoMaster app uses a PostgreSQL database (via Supabase) with the following key features:
+The TaskMaster app uses a PostgreSQL database (via Supabase) with the following key features:
 
 - **Enum Types**: For task priorities, statuses, and action types
 - **JSONB Data Type**: For storing activity log details

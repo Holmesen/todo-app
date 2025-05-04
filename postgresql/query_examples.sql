@@ -1,4 +1,4 @@
--- TodoMaster 应用常用SQL查询示例 (PostgreSQL版本)
+-- TaskMaster 应用常用SQL查询示例 (PostgreSQL版本)
 -- 本文件包含基于数据库结构的常见查询操作
 
 -- 1. 获取用户的所有任务（按到期日期排序）

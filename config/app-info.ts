@@ -5,7 +5,7 @@
 
 export const APP_INFO = {
   // 应用基本信息
-  NAME: 'TodoMaster',
+  NAME: 'TaskMaster',
   VERSION: '2.1.0',
   BUILD_NUMBER: '210',
   RELEASE_DATE: '2025年12月15日',
@@ -15,15 +15,15 @@ export const APP_INFO = {
   COMPANY: 'TaskMaster Inc.',
 
   // 联系信息
-  SUPPORT_EMAIL: 'support@todomaster-app.com',
-  WEBSITE: 'https://todomaster-app.com',
-  COMMUNITY_URL: 'https://community.todomaster-app.com',
-  TWITTER_HANDLE: 'todomasterapp',
+  SUPPORT_EMAIL: 'support@taskmaster-app.com',
+  WEBSITE: 'https://taskmaster-app.com',
+  COMMUNITY_URL: 'https://community.taskmaster-app.com',
+  TWITTER_HANDLE: 'taskmasterapp',
 
   // 法律链接
-  PRIVACY_POLICY_URL: 'https://todomaster-app.com/privacy-policy',
-  TERMS_URL: 'https://todomaster-app.com/terms',
-  HELP_URL: 'https://todomaster-app.com/help',
+  PRIVACY_POLICY_URL: 'https://taskmaster-app.com/privacy-policy',
+  TERMS_URL: 'https://taskmaster-app.com/terms',
+  HELP_URL: 'https://taskmaster-app.com/help',
 
   // 订阅计划
   SUBSCRIPTION: {
@@ -41,6 +41,10 @@ export const APP_INFO = {
     },
     TRIAL_DAYS: 7,
   },
+
+  // 应用商店评分URL
+  APP_STORE_URL: 'https://apps.apple.com/app/id1234567890',
+  PLAY_STORE_URL: 'https://play.google.com/store/apps/details?id=com.yourcompany.taskmaster',
 };
 
 export default APP_INFO;
